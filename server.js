@@ -10,6 +10,16 @@ app.use(express.json());
 app.use(express.static(__dirname));
 
 const NOTES_DIR = path.join(DATA_DIR, 'notes');
+const CONFIG_FILE = path.join(DATA_DIR, 'config.json');
+const SAMPLE_CONFIG_FILE = path.join(DATA_DIR, 'sample-config.json');
+
+// Serve config (falls back to sample if config.json not found)
+app.get('/api/config', (req, res) => {
+  try {
+    const file = fs.existsSync(CONFIG_FILE) ? CONFIG_FILE : SAMPLE_CONFIG_FILE;
+    res.json(JSON.parse(fs.readFileSync(file, 'utf8')));
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
 
 // Per-person 1:1 notes
 app.get('/api/notes/:id', (req, res) => {

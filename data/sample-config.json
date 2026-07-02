@@ -1,0 +1,53 @@
+{
+  "_comment": "Copy this file to config.json and fill in your team details. config.json is gitignored.",
+
+  "manager": {
+    "name": "Your Name",
+    "email": "you@okta.com",
+    "region": "LATAM",
+    "quota": 8250000
+  },
+
+  "team": [
+    {
+      "id": "se1",
+      "name": "First Last",
+      "match": "First",
+      "color": "#3B82F6",
+      "role": "Senior SE — Brazil",
+      "location": "City, Country",
+      "platform": "OWI",
+      "individualTarget": 1000000
+    },
+    {
+      "id": "se2",
+      "name": "First Last",
+      "match": "First",
+      "color": "#8B5CF6",
+      "role": "Senior SE — Mexico",
+      "location": "City, Country",
+      "platform": "Auth0",
+      "individualTarget": 1650000
+    }
+  ],
+
+  "alignment": [
+    {
+      "ae": "AE Last Name",
+      "region": "North Region",
+      "okta_se": "SE First Name",
+      "auth0_se": "SE First Name"
+    },
+    {
+      "ae": "Another AE",
+      "region": "South Region",
+      "okta_se": "SE First Name",
+      "auth0_se": "SE First Name"
+    }
+  ],
+
+  "manager_above": {
+    "name": "Your Manager",
+    "role": "VP / Director"
+  }
+}

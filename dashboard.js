@@ -37,13 +37,8 @@ function dashboard(){
     sortCol:'amount', sortAsc:false, modalDeal:null, currentUpdate:'',
     exportModal:false, exportText:'', copyDone:false,
 
-    seList:[
-      {name:'Matt Gueiros',     match:'Matt',    color:'#3B82F6'},
-      {name:'Gabriel Valdez',   match:'Gabriel', color:'#8B5CF6'},
-      {name:'Gaston Rodriguez', match:'Gaston',  color:'#14B8A6'},
-      {name:'Adriana Rojas',    match:'Adriana', color:'#EC4899'},
-      {name:'Isvi Acuna',       match:'Isvi',    color:'#F97316'},
-    ],
+    config: null,
+    seList: [],  // populated from config.json
 
     events:[],
 
@@ -92,6 +87,13 @@ function dashboard(){
         this.darkMode = true;
         document.documentElement.classList.add('dark');
       }
+      // Load config first so seList and alignment are ready
+      try {
+        const cfg = await fetch('/api/config').then(r=>r.json());
+        this.config = cfg;
+        this.seList = (cfg.team||[]).map(m=>({name:m.name, match:m.match||m.name.split(' ')[0], color:m.color||'#94A3B8'}));
+      } catch(e){ console.warn('Config load failed:', e); }
+
       try {
         const res = await fetch('/api/data');
         if (!res.ok) throw new Error('HTTP '+res.status);
@@ -288,7 +290,13 @@ function dashboard(){
     auth0Count(){return this.deals.filter(d=>(d.platform||'').includes('Auth0')).length;},
     oktaCount(){return this.deals.filter(d=>(d.platform||'').includes('Okta')).length;},
     seTotal(m){return this.deals.filter(d=>(d.se||'').includes(m)).reduce((s,d)=>s+d.amount,0);},
-    seColor(se){if(!se)return '#94A3B8';if(se.includes('Matt'))return '#3B82F6';if(se.includes('Gabriel'))return '#8B5CF6';if(se.includes('Gaston'))return '#14B8A6';if(se.includes('Adriana'))return '#EC4899';if(se.includes('Isvi'))return '#F97316';if(se.includes('Victor'))return '#6366F1';return '#94A3B8';},
+    seColor(se){
+      if(!se) return '#94A3B8';
+      const found = this.seList.find(m=>(se||'').includes(m.match));
+      if(found) return found.color;
+      if(se.includes('Victor')) return '#6366F1';
+      return '#94A3B8';
+    },
     stageBadgeClass(s){if(!s)return 'badge';if(s.includes('Technical Win'))return 'badge';if(s.includes('Final Due'))return 'badge';if(s.includes('Zombies'))return 'badge';if(s.includes('Loss'))return 'badge';if(s.includes('Scoping')||s.includes('Validate'))return 'badge';return 'badge';},
     stageBgStyle(s){if(!s)return 'background:#fef3c7;color:#92400e';if(s.includes('Technical Win'))return 'background:#d1fae5;color:#065f46';if(s.includes('Final Due'))return 'background:#dbeafe;color:#1d4ed8';if(s.includes('Zombies'))return 'background:#ffedd5;color:#c2410c';if(s.includes('Loss'))return 'background:#fee2e2;color:#dc2626';if(s.includes('Scoping')||s.includes('Validate'))return 'background:#fef3c7;color:#92400e';return 'background:#f1f5f9;color:#475569';},
     stageShort(s){if(!s)return '⚠️ No Stage';if(s.includes('Technical Win'))return '✅ Tech Win';if(s.includes('Final Due'))return '🔵 Final DD';if(s.includes('Zombies'))return '⚠️ Zombies';if(s.includes('Loss'))return '🚫 No Bid';if(s.includes('Scoping')||s.includes('Validate'))return '🟡 Scoping';return s.replace(/^\d+ - /,'');},
@@ -322,23 +330,21 @@ function dashboard(){
     clearUpdates(){for(const d of this.deals)localStorage.removeItem('upd_'+d.name);this.exportModal=false;},
     // SE Alignment: given AE owner + platform, return the expected SE name
     suggestSE(deal){
-      const ae       = (deal.ae || '').toLowerCase();
-      const platform = (deal.platform || '').toLowerCase();
-      const isAuth0  = platform.includes('auth0') || platform.includes('oci') || platform.includes('customer identity') || platform.includes('cic');
+      if(!this.config) return null;
+      const ae      = (deal.ae || '').toLowerCase();
+      const platform= (deal.platform || '').toLowerCase();
+      const isAuth0 = platform.includes('auth0') || platform.includes('oci') || platform.includes('customer identity') || platform.includes('cic');
 
-      // North LatAm: Martin Tropper, William Tefel (and TBH North LatAm)
-      if(ae.includes('tropper') || ae.includes('tefel'))
-        return isAuth0 ? 'Isvi Acuna' : 'Adriana Rojas';
-
-      // Brazil: Caetano Becker (and TBH Brazil)
-      if(ae.includes('becker') || ae.includes('caetano'))
-        return isAuth0 ? 'Gabriel Valdez' : 'Matt Gueiros';
-
-      // South LatAm: Gustavo Feldman, Guillermo Diez (and TBH South)
-      if(ae.includes('feldman') || ae.includes('gustavo') || ae.includes('diez') || ae.includes('guillermo'))
-        return isAuth0 ? 'Gabriel Valdez' : 'Gaston Rodriguez';
-
-      return null; // unknown AE — no suggestion
+      // Check config alignment rules
+      const rules = this.config.alignment || [];
+      for(const rule of rules){
+        const aeKey = (rule.ae||'').toLowerCase();
+        if(aeKey && ae.includes(aeKey)){
+          const seName = isAuth0 ? rule.auth0_se : rule.okta_se;
+          return seName || null;
+        }
+      }
+      return null;
     },
     // Returns 'match' | 'mismatch' | 'unassigned' | 'unknown'
     seAlignmentStatus(deal){
@@ -351,8 +357,9 @@ function dashboard(){
       return assigned.includes(suggestedFirst) ? 'match' : 'mismatch';
     },
     seIndividualTarget(se){
-      const t={'Matt Gueiros':1000000,'Gabriel Valdez':1650000,'Adriana Rojas':1650000,'Isvi Acuna':1650000,'Gaston Rodriguez':1650000};
-      return t[se]||null;
+      if(!se || !this.config) return null;
+      const member = (this.config.team||[]).find(m=>(se||'').includes(m.match||m.name.split(' ')[0]));
+      return member?.individualTarget || null;
     },
     ytdSeAttainment(se){
       if(!this.ytd) return null;
