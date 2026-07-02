@@ -31,10 +31,10 @@
   }
 
   .kpi-card {
-    background: white; border-radius: .875rem;
+    background: white; border-radius: .75rem;
     box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
     border: 1px solid #e8ecf0;
-    padding: 1rem; display: flex; flex-direction: column; gap: 4px;
+    padding: .5rem .75rem; display: flex; flex-direction: column; gap: 2px;
     transition: box-shadow .15s, transform .1s;
   }
   .kpi-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.1); }
@@ -353,35 +353,35 @@
 </div>
 <main class="max-w-screen-2xl mx-auto px-6 py-5">
   <!-- KPI Cards -->
-  <div class="space-y-3 mb-5" x-show="activeTab==='opportunities'">
+  <div class="space-y-2 mb-4" x-show="activeTab==='opportunities'">
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
       <div class="kpi-card cursor-pointer transition-all"
            :style="filterQuarter.length===0&&!filterSE&&!filterPlatform?'background:#0f172a;border-color:#3b82f6;outline:2px solid #3b82f6':'background:#1e293b;border-color:#475569'"
            @click="clearAllFilters()" title="Clear all filters">
         <span class="text-xs font-semibold uppercase tracking-wide" style="color:#94a3b8;">Total FY27</span>
-        <span class="text-2xl font-bold text-white" x-text="fmt(totalPipeline())"></span>
+        <span class="text-lg font-bold text-white" x-text="fmt(totalPipeline())"></span>
         <span class="text-xs" style="color:#64748b;" x-text="deals.length+' opportunities'"></span>
       </div>
       <div class="kpi-card cursor-pointer transition-all"
            :class="filterQuarter.includes('Q2')&&filterQuarter.length===1?'ring-2 ring-blue-500 bg-blue-50':''"
            @click="filterQuarter=['Q2']" title="Filter to Q2">
         <span class="text-xs text-slate-500 font-semibold uppercase tracking-wide">Q2 · Jul 31</span>
-        <span class="text-xl font-bold text-blue-600" x-text="fmt(q2Total())"></span>
-        <span class="text-xs text-slate-400" x-text="deals.filter(d=>d.quarter==='Q2').length+' deals'"></span>
+        <span class="text-lg font-bold text-blue-600" x-text="fmt(q2Total())"></span>
+        <span class="text-xs text-slate-400" x-text="baseDeals().filter(d=>d.quarter==='Q2').length+' deals'"></span>
       </div>
       <div class="kpi-card cursor-pointer transition-all"
            :class="filterQuarter.includes('Q3')&&filterQuarter.length===1?'ring-2 ring-purple-500 bg-purple-50':''"
            @click="filterQuarter=['Q3']" title="Filter to Q3">
         <span class="text-xs text-slate-500 font-semibold uppercase tracking-wide">Q3 · Oct 31</span>
-        <span class="text-xl font-bold text-purple-600" x-text="fmt(q3Total())"></span>
-        <span class="text-xs text-slate-400" x-text="deals.filter(d=>d.quarter==='Q3').length+' deals'"></span>
+        <span class="text-lg font-bold text-purple-600" x-text="fmt(q3Total())"></span>
+        <span class="text-xs text-slate-400" x-text="baseDeals().filter(d=>d.quarter==='Q3').length+' deals'"></span>
       </div>
       <div class="kpi-card cursor-pointer transition-all"
            :class="filterQuarter.includes('Q4')&&filterQuarter.length===1?'ring-2 ring-rose-500 bg-rose-50':''"
            @click="filterQuarter=['Q4']" title="Filter to Q4">
         <span class="text-xs text-slate-500 font-semibold uppercase tracking-wide">Q4 · Jan 31</span>
-        <span class="text-xl font-bold text-rose-600" x-text="fmt(q4Total())"></span>
-        <span class="text-xs text-slate-400" x-text="deals.filter(d=>d.quarter==='Q4').length+' deals'"></span>
+        <span class="text-lg font-bold text-rose-600" x-text="fmt(q4Total())"></span>
+        <span class="text-xs text-slate-400" x-text="baseDeals().filter(d=>d.quarter==='Q4').length+' deals'"></span>
       </div>
     </div>
     <div class="grid grid-cols-2 gap-3">
@@ -390,15 +390,15 @@
            style="border-left:4px solid #818cf8;"
            @click="togglePlatform('Okta')" title="Filter to Okta deals">
         <span class="text-xs text-slate-500 font-semibold uppercase tracking-wide">Okta Platform</span>
-        <span class="text-xl font-bold text-indigo-700" x-text="fmt(oktaTotal())"></span>
-        <span class="text-xs text-slate-400" x-text="oktaCount()+' deals · WIC + Customer Identity'"></span>
+        <span class="text-lg font-bold text-indigo-700" x-text="fmt(oktaTotal())"></span>
+        <span class="text-xs text-slate-400" x-text="oktaCount()+' deals · OWI + OCI'"></span>
       </div>
       <div class="kpi-card cursor-pointer transition-all"
            :class="filterPlatform==='Auth0'?'ring-2 ring-orange-500 bg-orange-50':''"
            style="border-left:4px solid #fb923c;"
            @click="togglePlatform('Auth0')" title="Filter to Auth0 deals">
         <span class="text-xs text-slate-500 font-semibold uppercase tracking-wide">Auth0</span>
-        <span class="text-xl font-bold text-orange-600" x-text="fmt(auth0Total())"></span>
+        <span class="text-lg font-bold text-orange-600" x-text="fmt(auth0Total())"></span>
         <span class="text-xs text-slate-400" x-text="auth0Count()+' deals · Customer Identity Cloud'"></span>
       </div>
     </div>
@@ -413,8 +413,8 @@
               <span class="w-2 h-2 rounded-full flex-shrink-0" :style="'background:'+se.color"></span>
               <span x-text="se.name"></span>
             </span>
-            <span class="text-lg font-bold text-slate-800" x-text="fmt(seTotal(se.match))"></span>
-            <span class="text-xs text-slate-400" x-text="deals.filter(d=>(d.se||'').includes(se.match)).length+' deals'"></span>
+            <span class="text-base font-bold text-slate-800" x-text="fmt(seTotal(se.match))"></span>
+            <span class="text-xs text-slate-400" x-text="baseDeals().filter(d=>(d.se||'').includes(se.match)).length+' deals'"></span>
           </div>
         </template>
     </div>
@@ -460,6 +460,13 @@
       <label class="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
         <input type="checkbox" x-model="filter100k" /> &gt;$100K only
       </label>
+      <button
+        x-show="search||filterSE||filterQuarter.length||filterStage||filterWarnings||filterPlatform||filter100k"
+        @click="clearAllFilters()"
+        class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors"
+        title="Clear all filters">
+        ✕ Reset
+      </button>
       <!-- Columns picker -->
       <div class="relative ml-auto" @click.outside="colPickerOpen=false">
         <button @click="colPickerOpen=!colPickerOpen"

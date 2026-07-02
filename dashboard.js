@@ -181,19 +181,30 @@ function dashboard(){
       else if(this.techWinStatus(d)==='warn') tags.push({label:'⚠️ '+this.techWinGap(d)+'d buffer',style:'background:#fef3c7;color:#92400e'});
       if(!d.se) tags.push({label:'No SE assigned',style:'background:#fee2e2;color:#dc2626'});
       if(!d.presalesStage) tags.push({label:'No PreSales Stage',style:'background:#fef3c7;color:#92400e'});
+      if(this.seAlignmentStatus(d)==='mismatch') tags.push({label:'⚠️ Mapping suggestion',style:'background:#ede9fe;color:#5b21b6'});
       return tags;
     },
     warningDeals(){return this.deals.filter(d=>this.dealWarningTags(d).length>0);},
-    filteredDeals(){
-      let d=this.deals.filter(deal=>{
-        const q=this.search.toLowerCase();
+    baseDeals(){
+      const q=this.search.toLowerCase();
+      return this.deals.filter(deal=>{
         if(q&&!deal.name.toLowerCase().includes(q)&&!(deal.se||'').toLowerCase().includes(q)&&!(deal.vfNotes||'').toLowerCase().includes(q))return false;
-        if(this.filterSE&&!(deal.se||'').includes(this.filterSE)&&!(this.filterSE==='UNASSIGNED'&&!deal.se))return false;
-        if(this.filterQuarter.length>0&&!this.filterQuarter.includes(deal.quarter))return false;
         if(this.filterStage&&!(deal.presalesStage||'').includes(this.filterStage))return false;
-        if(this.filterPlatform&&!(deal.platform||'').includes(this.filterPlatform))return false;
         if(this.filterWarnings&&this.dealWarningTags(deal).length===0)return false;
         if(this.filter100k&&deal.amount<100000)return false;
+        return true;
+      });
+    },
+    filteredDeals(){
+      let d=this.baseDeals().filter(deal=>{
+        if(this.filterSE&&!(deal.se||'').includes(this.filterSE)&&!(this.filterSE==='UNASSIGNED'&&!deal.se))return false;
+        if(this.filterQuarter.length>0&&!this.filterQuarter.includes(deal.quarter))return false;
+        if(this.filterPlatform){
+          const p = deal.platform||'';
+          const f = this.filterPlatform;
+          const match = f==='Okta' ? this.isOktaPlatform(p) : f==='Auth0' ? this.isAuth0Platform(p) : p===f;
+          if(!match) return false;
+        }
         return true;
       });
       const col=this.sortCol,asc=this.sortAsc;
@@ -281,15 +292,17 @@ function dashboard(){
         .sort((a,b)=>monthOrder.indexOf(a)-monthOrder.indexOf(b))
         .map(m=>({month:m,events:groups[m]}));
     },
-    totalPipeline(){return this.deals.reduce((s,d)=>s+d.amount,0);},
-    q2Total(){return this.deals.filter(d=>d.quarter==='Q2').reduce((s,d)=>s+d.amount,0);},
-    q3Total(){return this.deals.filter(d=>d.quarter==='Q3').reduce((s,d)=>s+d.amount,0);},
-    q4Total(){return this.deals.filter(d=>d.quarter==='Q4').reduce((s,d)=>s+d.amount,0);},
-    auth0Total(){return this.deals.filter(d=>(d.platform||'').includes('Auth0')).reduce((s,d)=>s+d.amount,0);},
-    oktaTotal(){return this.deals.filter(d=>(d.platform||'').includes('Okta')).reduce((s,d)=>s+d.amount,0);},
-    auth0Count(){return this.deals.filter(d=>(d.platform||'').includes('Auth0')).length;},
-    oktaCount(){return this.deals.filter(d=>(d.platform||'').includes('Okta')).length;},
-    seTotal(m){return this.deals.filter(d=>(d.se||'').includes(m)).reduce((s,d)=>s+d.amount,0);},
+    totalPipeline(){return this.baseDeals().reduce((s,d)=>s+d.amount,0);},
+    q2Total(){return this.baseDeals().filter(d=>d.quarter==='Q2').reduce((s,d)=>s+d.amount,0);},
+    q3Total(){return this.baseDeals().filter(d=>d.quarter==='Q3').reduce((s,d)=>s+d.amount,0);},
+    q4Total(){return this.baseDeals().filter(d=>d.quarter==='Q4').reduce((s,d)=>s+d.amount,0);},
+    isOktaPlatform(p){ return p==='OWI'||p==='OCI'||p==='Both'; },
+    isAuth0Platform(p){ return p==='Auth0'||p==='Both'; },
+    auth0Total(){return this.baseDeals().filter(d=>this.isAuth0Platform(d.platform)).reduce((s,d)=>s+d.amount,0);},
+    oktaTotal(){return this.baseDeals().filter(d=>this.isOktaPlatform(d.platform)).reduce((s,d)=>s+d.amount,0);},
+    auth0Count(){return this.baseDeals().filter(d=>this.isAuth0Platform(d.platform)).length;},
+    oktaCount(){return this.baseDeals().filter(d=>this.isOktaPlatform(d.platform)).length;},
+    seTotal(m){return this.baseDeals().filter(d=>(d.se||'').includes(m)).reduce((s,d)=>s+d.amount,0);},
     seColor(se){
       if(!se) return '#94A3B8';
       const found = this.seList.find(m=>(se||'').includes(m.match));
