@@ -1,0 +1,20 @@
+[
+  {
+    "id": "example-partner",
+    "name": "Example Partner Inc.",
+    "type": "Reseller",
+    "tier": "Activate",
+    "country": "Mexico",
+    "region": "LATAM",
+    "revenueCurrentYear": 50000,
+    "status": "Active",
+    "accountOwner": "Eric Martinez",
+    "sfdcId": "",
+    "sfdcType": "account",
+    "contacts": [],
+    "activeDeals": [],
+    "initiatives": [],
+    "notes": "",
+    "nextSteps": []
+  }
+]

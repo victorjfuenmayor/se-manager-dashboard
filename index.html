@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LATAM SE Manager Dashboard | FY27</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="/dashboard.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+  /* ── Base ───────────────────────────────────────────────────────────── */
+  * { box-sizing: border-box; }
+  html { font-size: 108%; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+
+  /* ── Scrollbars ─────────────────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
+  ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 8px; border: 2px solid #f1f5f9; }
+  ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+  ::-webkit-scrollbar-corner { background: #f1f5f9; }
+
+  /* ── Components ─────────────────────────────────────────────────────── */
+  [x-cloak] { display: none !important; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 2px;
+    padding: 2px 8px; border-radius: 9999px;
+    font-size: .7rem; font-weight: 600; white-space: nowrap; letter-spacing: .01em;
+  }
+
+  .kpi-card {
+    background: white; border-radius: .875rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    border: 1px solid #e8ecf0;
+    padding: 1rem; display: flex; flex-direction: column; gap: 4px;
+    transition: box-shadow .15s, transform .1s;
+  }
+  .kpi-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.1); }
+  .kpi-card.cursor-pointer:hover { transform: translateY(-1px); }
+
+  /* Table */
+  td { padding: 10px 14px; font-size: .875rem; color: #374151; border-bottom: 1px solid #f0f3f6; }
+  th { text-align: left; font-size: .68rem; font-weight: 700; text-transform: uppercase;
+       letter-spacing: .07em; color: #6b7280; padding: 10px 14px; cursor: pointer;
+       user-select: none; white-space: nowrap; background: #f9fafb; }
+  tr:hover td { background: #f6f8fc; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+  /* ── Dark Mode ───────────────────────────────────────────────────────── */
+  html.dark {
+    color-scheme: dark;
+    --bg-base:    #0d1117;
+    --bg-card:    #161b22;
+    --bg-raised:  #1c2128;
+    --bg-input:   #21262d;
+    --border:     #30363d;
+    --border-sub: #21262d;
+    --text-primary:   #e6edf3;
+    --text-secondary: #7d8590;
+    --text-muted:     #484f58;
+    --text-link:      #58a6ff;
+  }
+
+  html.dark body      { background: var(--bg-base) !important; color: var(--text-primary); }
+
+  /* Cards */
+  html.dark .kpi-card {
+    background: var(--bg-card) !important;
+    border-color: var(--border) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,.4);
+  }
+
+  /* White / light surfaces */
+  html.dark .bg-white          { background: var(--bg-card)   !important; }
+  html.dark .bg-slate-50        { background: var(--bg-card)   !important; }
+  html.dark .bg-slate-100       { background: var(--bg-base)   !important; }
+  html.dark .bg-slate-800       { background: var(--bg-raised) !important; }
+
+  /* Coloured tint backgrounds (modals, notes, alerts) */
+  html.dark .bg-blue-50         { background: #1c2d3f !important; }
+  html.dark .bg-amber-50        { background: #2b1d0a !important; }
+  html.dark .bg-amber-100       { background: #2b1d0a !important; }
+  html.dark .bg-red-50          { background: #2d1515 !important; }
+  html.dark .bg-emerald-50      { background: #0d2318 !important; }
+  html.dark .bg-indigo-50       { background: #1a1c3a !important; }
+  html.dark .bg-orange-50       { background: #2b1505 !important; }
+  html.dark .bg-purple-50       { background: #1f1730 !important; }
+
+  /* Text */
+  html.dark .text-slate-900 { color: #e6edf3 !important; }
+  html.dark .text-slate-800 { color: #cdd9e5 !important; }
+  html.dark .text-slate-700 { color: #adbac7 !important; }
+  html.dark .text-slate-600 { color: #768390 !important; }
+  html.dark .text-slate-500 { color: #636e7b !important; }
+  html.dark .text-slate-400 { color: #545d68 !important; }
+  html.dark .text-slate-300 { color: #444c56 !important; }
+  html.dark .font-medium.text-slate-900 { color: #e6edf3 !important; }
+
+  /* Coloured text — keep readable */
+  html.dark .text-blue-700    { color: #79c0ff !important; }
+  html.dark .text-purple-700  { color: #d2a8ff !important; }
+  html.dark .text-rose-600    { color: #ff7b72 !important; }
+  html.dark .text-indigo-700  { color: #a5b4fc !important; }
+  html.dark .text-orange-600  { color: #ffa657 !important; }
+  html.dark .text-emerald-700 { color: #56d364 !important; }
+  html.dark .text-amber-800   { color: #e3b341 !important; }
+  html.dark .text-amber-700   { color: #d29922 !important; }
+  html.dark .text-amber-600   { color: #c09035 !important; }
+  html.dark .text-red-600     { color: #ff7b72 !important; }
+
+  /* Borders */
+  html.dark .border, html.dark .border-slate-200,
+  html.dark .border-slate-300   { border-color: var(--border) !important; }
+  html.dark .border-slate-100   { border-color: var(--border-sub) !important; }
+  html.dark .border-blue-100    { border-color: #1f4068 !important; }
+  html.dark .border-amber-200   { border-color: #5a3a00 !important; }
+  html.dark .border-b, html.dark .border-t { border-color: var(--border) !important; }
+  html.dark .border-dashed      { border-color: var(--border) !important; }
+  html.dark .divide-slate-100>* { border-color: var(--border-sub) !important; }
+
+  /* Table */
+  html.dark td          { color: #adbac7 !important; border-color: var(--border-sub) !important; }
+  html.dark th          { color: #636e7b !important; background: #0d1117 !important; }
+  html.dark thead       { border-color: var(--border) !important; }
+  html.dark tr:hover td { background: #1c2128 !important; }
+
+  /* Inputs */
+  html.dark input, html.dark select, html.dark textarea {
+    background: var(--bg-input) !important;
+    color: #e6edf3 !important;
+    border-color: var(--border) !important;
+  }
+  html.dark input::placeholder { color: var(--text-secondary) !important; }
+
+  /* Code / pre */
+  html.dark pre { background: var(--bg-base) !important; color: #adbac7 !important; border-color: var(--border) !important; }
+
+  /* Rounded panels (modal sections, event rows, notes boxes) */
+  html.dark .rounded-xl { border-color: var(--border) !important; }
+  html.dark .rounded-xl.border { background: var(--bg-card) !important; }
+  html.dark .rounded-lg.bg-slate-50 { background: var(--bg-input) !important; }
+
+  /* Hover utilities */
+  html.dark .hover\:bg-slate-50:hover  { background: var(--bg-raised) !important; }
+  html.dark .hover\:bg-slate-100:hover { background: var(--bg-input) !important; }
+  html.dark .hover\:bg-blue-50:hover   { background: #1c2d3f !important; }
+  html.dark .hover\:bg-amber-50:hover  { background: #2b1d0a !important; }
+  html.dark .hover\:bg-red-50:hover    { background: #2d1515 !important; }
+
+  /* Inline style overrides (Alpine dynamic styles) */
+  html.dark [style*="background:white"]    { background: var(--bg-card) !important; }
+  html.dark [style*="background: white"]   { background: var(--bg-card) !important; }
+  html.dark [style*="background:#f8fafc"]  { background: var(--bg-raised) !important; }
+  html.dark [style*="background:#f1f5f9"]  { background: var(--bg-input) !important; }
+
+  /* Scrollbar dark */
+  html.dark ::-webkit-scrollbar-thumb { background: #30363d; }
+
+  html.dark .bg-emerald-500 { background:#22c55e!important; }
+  html.dark .bg-blue-500    { background:#3b82f6!important; }
+  html.dark .bg-amber-400   { background:#f59e0b!important; }
+  html.dark .bg-slate-100   { background:#1e293b!important; }
+  html.dark .text-emerald-600 { color:#4ade80!important; }
+  html.dark .text-blue-600    { color:#60a5fa!important; }
+  html.dark .text-amber-600   { color:#fbbf24!important; }
+  html.dark ::-webkit-scrollbar-track { background: var(--bg-base); }
+</style>
+</head>
+<body class="bg-slate-100 min-h-screen font-sans antialiased" x-data="dashboard()">
+
+<!-- Header -->
+<header class="bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg sticky top-0 z-40">
+  <div class="max-w-screen-2xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center font-bold text-sm">SE</div>
+      <div>
+        <h1 class="text-base font-bold leading-none">LATAM SE Manager Dashboard · FY27</h1>
+        <p class="text-slate-400 text-xs mt-0.5">Victor Fuenmayor · Salesforce via Google Sheet · <span class="text-slate-500">Last synced: <span x-text="updatedAt||'loading...'"></span></span></p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <button @click="toggleDark()"
+        class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+        :title="darkMode?'Switch to light mode':'Switch to dark mode'"
+        x-text="darkMode?'☀️':'🌙'"></button>
+      <button @click="exportUpdates()" :class="pendingUpdatesCount()>0?'bg-amber-500 hover:bg-amber-400':'bg-slate-700 hover:bg-slate-600'" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-white">
+        <span>📤 Export Updates</span>
+        <span x-show="pendingUpdatesCount()>0" class="bg-white text-amber-600 rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold" x-text="pendingUpdatesCount()"></span>
+      </button>
+      <span class="text-xs" :class="pendingUpdatesCount()>0?'text-amber-400':'text-slate-500'" x-text="pendingUpdatesCount()>0?pendingUpdatesCount()+' pending':'No pending updates'"></span>
+    </div>
+  </div>
+  <div class="max-w-screen-2xl mx-auto px-6 flex gap-1">
+    <button @click="activeTab='opportunities'" :class="activeTab==='opportunities'?'bg-white text-slate-800 font-semibold':'text-slate-300 hover:text-white'" class="px-4 py-2 rounded-t-lg text-sm">📊 Business</button>
+    <button @click="activeTab='ytd'" :class="activeTab==='ytd'?'bg-white text-slate-800 font-semibold':'text-slate-300 hover:text-white'" class="px-4 py-2 rounded-t-lg text-sm">📈 YTD</button>
+    <button @click="activeTab='events'" :class="activeTab==='events'?'bg-white text-slate-800 font-semibold':'text-slate-300 hover:text-white'" class="px-4 py-2 rounded-t-lg text-sm">🗓️ Events &amp; Coverage</button>
+    <button @click="activeTab='initiatives'" :class="activeTab==='initiatives'?'bg-white text-slate-800 font-semibold':'text-slate-300 hover:text-white'" class="px-4 py-2 rounded-t-lg text-sm">🚀 Initiatives</button>
+    <button @click="activeTab='people'" :class="activeTab==='people'?'bg-white text-slate-800 font-semibold':'text-slate-300 hover:text-white'" class="px-4 py-2 rounded-t-lg text-sm">👥 People</button>
+    <button @click="activeTab='partners'" :class="activeTab==='partners'?'bg-white text-slate-800 font-semibold':'text-slate-300 hover:text-white'" class="px-4 py-2 rounded-t-lg text-sm">🤝 Partners</button>
+  </div>
+</header>
+
+<!-- Export Modal -->
+<div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" x-show="exportModal" @click.self="exportModal=false" x-cloak>
+  <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] flex flex-col" @click.stop>
+    <div class="p-5 border-b flex items-center justify-between">
+      <div><h2 class="font-bold text-slate-900">Export Updates for Claude</h2><p class="text-xs text-slate-500">Copy → paste to Claude → "write these updates to VF Context Notes"</p></div>
+      <button @click="exportModal=false" class="text-slate-400 hover:text-slate-600 text-xl">✕</button>
+    </div>
+    <div class="flex-1 overflow-y-auto p-4"><pre class="bg-slate-50 border rounded-xl p-4 text-xs text-slate-700 whitespace-pre-wrap font-mono" x-text="exportText"></pre></div>
+    <div class="p-4 border-t flex gap-3">
+      <button @click="copyExport()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 text-sm font-semibold" x-text="copyDone?'✅ Copied!':'📋 Copy to Clipboard'"></button>
+      <button @click="clearUpdates()" class="px-4 text-sm text-red-600 hover:bg-red-50 rounded-lg">Clear All</button>
+    </div>
+  </div>
+</div>
+
+<!-- Notes Modal -->
+<div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" x-show="modalDeal" @click.self="closeModal()" x-cloak>
+  <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col" @click.stop>
+    <div class="p-5 border-b flex-shrink-0">
+      <div class="flex items-start justify-between">
+        <div>
+          <h2 class="font-bold text-slate-900" x-text="modalDeal?.name"></h2>
+          <a x-show="modalDeal?.sfdcId" :href="sfdcUrl(modalDeal?.sfdcId,'opportunity')" target="_blank" rel="noopener"
+             class="mt-1 inline-flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 font-medium">
+            ↗ Open in Salesforce
+          </a>
+          <div class="flex flex-wrap items-center gap-2 mt-1.5">
+            <span class="text-lg font-bold" :class="(modalDeal?.amount||0)>=500000?'text-emerald-700':'text-blue-700'" x-text="modalDeal?fmt(modalDeal.amount):''"></span>
+            <span class="text-slate-300">·</span>
+            <span class="text-sm text-slate-600" x-text="'Closes '+(modalDeal?fmtDate(modalDeal.closeDate):'')"></span>
+            <span class="text-slate-300">·</span>
+            <span :class="modalDeal?stageBadgeClass(modalDeal.presalesStage):'badge'" :style="modalDeal?stageBgStyle(modalDeal.presalesStage):''" x-text="modalDeal?.presalesStage"></span>
+          </div>
+        </div>
+        <button @click="closeModal()" class="text-slate-400 hover:text-slate-600 text-xl ml-4">✕</button>
+      </div>
+    </div>
+    <div class="flex-1 overflow-y-auto p-5 space-y-4">
+      <div class="grid grid-cols-2 gap-3 text-sm">
+        <div class="bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
+          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Lead SE</div>
+          <div x-show="modalDeal?.se">
+            <div class="flex items-center gap-1.5 font-medium">
+              <span class="w-2 h-2 rounded-full" :style="'background:'+seColor(modalDeal?.se)"></span>
+              <span x-text="modalDeal?.se"></span>
+              <span x-show="modalDeal && seAlignmentStatus(modalDeal)==='match'" class="text-emerald-500 text-xs" title="Matches SE mapping">✓</span>
+            </div>
+            <div x-show="modalDeal && seAlignmentStatus(modalDeal)==='mismatch'" class="mt-1 text-xs text-amber-600 font-semibold">
+              ⚠️ Mapping suggests: <span :style="'color:'+seColor(suggestSE(modalDeal))" x-text="suggestSE(modalDeal)"></span>
+            </div>
+          </div>
+          <div x-show="!modalDeal?.se">
+            <span class="text-xs text-red-500 font-medium">⚠️ Unassigned</span>
+            <div x-show="modalDeal && suggestSE(modalDeal)" class="mt-1 text-xs font-semibold">
+              Assign to: <span :style="'color:'+seColor(suggestSE(modalDeal))" x-text="suggestSE(modalDeal)"></span>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-3 shadow-sm"><div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">AE</div><div class="font-medium" x-text="modalDeal?.ae||'—'"></div></div>
+        <div class="bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
+          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Forecasted Tech Win</div>
+          <div x-show="modalDeal?.techWinDate">
+            <span class="font-medium" x-text="modalDeal?fmtDate(modalDeal.techWinDate):''"></span>
+            <span x-show="modalDeal&&techWinStatus(modalDeal)==='danger'" class="ml-1 text-xs text-red-600 font-semibold">🚨 after close!</span>
+            <span x-show="modalDeal&&techWinStatus(modalDeal)==='warn'" class="ml-1 text-xs text-amber-600 font-semibold" x-text="modalDeal?'⚠️ '+techWinGap(modalDeal)+'d buffer':''"></span>
+            <span x-show="modalDeal&&techWinStatus(modalDeal)==='ok'" class="ml-1 text-xs text-emerald-600" x-text="modalDeal?'✅ '+techWinGap(modalDeal)+'d before close':''"></span>
+          </div>
+          <div class="text-slate-400 italic text-xs" x-show="!modalDeal?.techWinDate">— TBD</div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-3 shadow-sm"><div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Confidence</div><div class="font-medium" x-text="modalDeal?.confidence||'—'"></div></div>
+        <div class="bg-white border border-slate-200 rounded-xl p-3 shadow-sm col-span-2">
+          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Sales Stage (SFDC)</div>
+          <div class="font-medium" x-text="modalDeal?.sfdcStage||'—'"></div>
+        </div>
+      </div>
+      <div x-show="modalDeal?.vfNotes" class="rounded-xl border border-blue-200 overflow-hidden shadow-sm">
+        <div class="px-4 py-2 bg-blue-50 border-b border-blue-200 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></span>
+          <span class="text-xs font-bold uppercase tracking-wide text-blue-700">VF Notes</span>
+        </div>
+        <div class="bg-white p-4 text-sm text-slate-700 whitespace-pre-line" x-text="modalDeal?.vfNotes"></div>
+      </div>
+      <div x-show="modalDeal?.aeNotes" class="rounded-xl border border-emerald-200 overflow-hidden shadow-sm">
+        <div class="px-4 py-2 bg-emerald-50 border-b border-emerald-200 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0"></span>
+          <span class="text-xs font-bold uppercase tracking-wide text-emerald-700">AE Notes</span>
+        </div>
+        <div class="bg-white p-4 text-sm text-slate-700 whitespace-pre-line max-h-40 overflow-y-auto" x-text="modalDeal?.aeNotes"></div>
+      </div>
+      <div x-show="modalDeal?.asdNotes" class="rounded-xl border border-purple-200 overflow-hidden shadow-sm">
+        <div class="px-4 py-2 bg-purple-50 border-b border-purple-200 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-purple-500 flex-shrink-0"></span>
+          <span class="text-xs font-bold uppercase tracking-wide text-purple-700">ASD Notes</span>
+        </div>
+        <div class="bg-white p-4 text-sm text-slate-700 whitespace-pre-line max-h-32 overflow-y-auto" x-text="modalDeal?.asdNotes"></div>
+      </div>
+      <div x-show="modalDeal?.seNotes" class="rounded-xl border border-amber-200 overflow-hidden shadow-sm">
+        <div class="px-4 py-2 bg-amber-50 border-b border-amber-200 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0"></span>
+          <span class="text-xs font-bold uppercase tracking-wide text-amber-700">SE Notes</span>
+        </div>
+        <div class="bg-white p-4 text-sm text-slate-700 whitespace-pre-line max-h-32 overflow-y-auto" x-text="modalDeal?.seNotes"></div>
+      </div>
+      <div x-show="modalDeal&&dealWarningTags(modalDeal).length>0">
+        <div class="flex flex-wrap gap-1.5 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+          <span class="text-xs font-semibold text-amber-800 w-full mb-1">⚠️ Warnings</span>
+          <template x-for="tag in dealWarningTags(modalDeal)" :key="tag.label">
+            <span class="badge" :style="tag.style" x-text="tag.label"></span>
+          </template>
+        </div>
+      </div>
+      <div class="rounded-xl border-2 border-amber-200 overflow-hidden shadow-sm">
+        <div class="px-4 py-2.5 bg-amber-50 border-b-2 border-amber-200 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0"></span>
+            <span class="text-xs font-bold uppercase tracking-wide text-amber-700">📝 Add Update</span>
+          </div>
+          <div class="text-xs text-slate-400">Saved locally · export to sync to VF Context Notes</div>
+        </div>
+        <div class="p-4">
+        <div x-show="modalDeal&&getSavedUpdate(modalDeal.name)" class="mb-3">
+          <div class="text-xs text-slate-400 mb-1 flex items-center justify-between"><span>Pending update:</span><button @click="clearUpdate(modalDeal.name)" class="text-red-400 hover:text-red-600 text-xs">✕ clear</button></div>
+          <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-slate-700 whitespace-pre-line" x-text="getSavedUpdate(modalDeal?.name)"></div>
+        </div>
+        <textarea x-model="currentUpdate" placeholder="07/01/26 VF: [Your update]" class="w-full border border-slate-200 rounded-xl p-3 text-sm resize-none h-24 bg-white focus:outline-none focus:border-amber-400"></textarea>
+        <div class="flex gap-2 mt-2">
+          <button @click="saveUpdate(modalDeal?.name)" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg py-2 text-sm font-semibold">💾 Save Update Locally</button>
+          <button @click="currentUpdate=''" class="px-3 text-sm text-slate-500 hover:bg-slate-100 rounded-lg">Clear</button>
+        </div>
+        <p class="text-xs text-slate-400 mt-2">Export → paste to Claude → Claude writes to <strong>VF Additional Context / Notes</strong> column.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div x-show="loading" class="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center">
+  <div class="bg-white rounded-xl px-8 py-6 text-center shadow-2xl">
+    <div class="text-2xl mb-2">⏳</div>
+    <div class="text-sm font-medium text-slate-700">Loading dashboard data…</div>
+  </div>
+</div>
+<div x-show="loadError" class="fixed top-4 right-4 z-50 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl shadow-lg">
+  ⚠️ Could not load data. Is the server running? <code class="ml-1 text-xs bg-red-100 px-1 rounded">node server.js</code>
+</div>
+<main class="max-w-screen-2xl mx-auto px-6 py-5">
+  <!-- KPI Cards -->
+  <div class="space-y-3 mb-5" x-show="activeTab==='opportunities'">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="kpi-card cursor-pointer transition-all"
+           :style="filterQuarter.length===0&&!filterSE&&!filterPlatform?'background:#0f172a;border-color:#3b82f6;outline:2px solid #3b82f6':'background:#1e293b;border-color:#475569'"
+           @click="clearAllFilters()" title="Clear all filters">
+        <span class="text-xs font-semibold uppercase tracking-wide" style="color:#94a3b8;">Total FY27</span>
+        <span class="text-2xl font-bold text-white" x-text="fmt(totalPipeline())"></span>
+        <span class="text-xs" style="color:#64748b;" x-text="deals.length+' opportunities'"></span>
+      </div>
+      <div class="kpi-card cursor-pointer transition-all"
+           :class="filterQuarter.includes('Q2')&&filterQuarter.length===1?'ring-2 ring-blue-500 bg-blue-50':''"
+           @click="filterQuarter=['Q2']" title="Filter to Q2">
+        <span class="text-xs text-slate-500 font-semibold uppercase tracking-wide">Q2 · Jul 31</span>
+        <span class="text-xl font-bold text-blue-600" x-text="fmt(q2Total())"></span>
+        <span class="text-xs text-slate-400" x-text="deals.filter(d=>d.quarter==='Q2').length+' deals'"></span>
+      </div>
+      <div class="kpi-card cursor-pointer transition-all"
+           :class="filterQuarter.includes('Q3')&&filterQuarter.length===1?'ring-2 ring-purple-500 bg-purple-50':''"
+           @click="filterQuarter=['Q3']" title="Filter to Q3">
+        <span class="text-xs text-slate-500 font-semibold uppercase tracking-wide">Q3 · Oct 31</span>
+        <span class="text-xl font-bold text-purple-600" x-text="fmt(q3Total())"></span>
+        <span class="text-xs text-slate-400" x-text="deals.filter(d=>d.quarter==='Q3').length+' deals'"></span>
+      </div>
+      <div class="kpi-card cursor-pointer transition-all"
+           :class="filterQuarter.includes('Q4')&&filterQuarter.length===1?'ring-2 ring-rose-500 bg-rose-50':''"
+           @click="filterQuarter=['Q4']" title="Filter to Q4">
+        <span class="text-xs text-slate-500 font-semibold uppercase tracking-wide">Q4 · Jan 31</span>
+        <span class="text-xl font-bold text-rose-600" x-text="fmt(q4Total())"></span>
+        <span class="text-xs text-slate-400" x-text="deals.filter(d=>d.quarter==='Q4').length+' deals'"></span>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div class="kpi-card cursor-pointer transition-all"
+           :class="filterPlatform==='Okta'?'ring-2 ring-indigo-500 bg-indigo-50':''"
+           style="border-left:4px solid #818cf8;"
+           @click="togglePlatform('Okta')" title="Filter to Okta deals">
+        <span class="text-xs text-slate-500 font-semibold uppercase tracking-wide">Okta Platform</span>
+        <span class="text-xl font-bold text-indigo-700" x-text="fmt(oktaTotal())"></span>
+        <span class="text-xs text-slate-400" x-text="oktaCount()+' deals · WIC + Customer Identity'"></span>
+      </div>
+      <div class="kpi-card cursor-pointer transition-all"
+           :class="filterPlatform==='Auth0'?'ring-2 ring-orange-500 bg-orange-50':''"
+           style="border-left:4px solid #fb923c;"
+           @click="togglePlatform('Auth0')" title="Filter to Auth0 deals">
+        <span class="text-xs text-slate-500 font-semibold uppercase tracking-wide">Auth0</span>
+        <span class="text-xl font-bold text-orange-600" x-text="fmt(auth0Total())"></span>
+        <span class="text-xs text-slate-400" x-text="auth0Count()+' deals · Customer Identity Cloud'"></span>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <template x-for="se in seList" :key="se.name">
+          <div class="kpi-card cursor-pointer transition-all"
+               :class="filterSE===se.match?'ring-2 bg-slate-50':''"
+               :style="'border-left:4px solid '+se.color+(filterSE===se.match?';outline:2px solid '+se.color+';outline-offset:2px':'')"
+               @click="toggleSE(se.match)"
+               :title="'Filter to '+se.name.split(' ')[0]">
+            <span class="text-xs text-slate-500 font-medium flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full flex-shrink-0" :style="'background:'+se.color"></span>
+              <span x-text="se.name"></span>
+            </span>
+            <span class="text-lg font-bold text-slate-800" x-text="fmt(seTotal(se.match))"></span>
+            <span class="text-xs text-slate-400" x-text="deals.filter(d=>(d.se||'').includes(se.match)).length+' deals'"></span>
+          </div>
+        </template>
+    </div>
+  </div>
+
+  <!-- Opportunities Tab -->
+  <div x-show="activeTab==='opportunities'" x-cloak>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 mb-4 flex flex-wrap gap-2 items-center">
+      <input type="text" placeholder="Search…" x-model="search" class="flex-1 min-w-40 px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <select x-model="filterSE" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none">
+        <option value="">All SEs</option>
+        <template x-for="se in seList" :key="se.name"><option :value="se.match" x-text="se.name"></option></template>
+        <option value="UNASSIGNED">⚠️ Unassigned</option>
+      </select>
+      <div class="flex items-center gap-1">
+        <button @click="filterQuarter=[]"
+          :class="filterQuarter.length===0?'bg-slate-700 text-white':'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'"
+          class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors">All</button>
+        <button @click="toggleQuarter('Q2')"
+          :class="filterQuarter.includes('Q2')?'text-white':'text-slate-500 border border-slate-200 hover:bg-blue-50'"
+          :style="filterQuarter.includes('Q2')?'background:#2563eb':'background:white'"
+          class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors">Q2</button>
+        <button @click="toggleQuarter('Q3')"
+          :class="filterQuarter.includes('Q3')?'text-white':'text-slate-500 border border-slate-200 hover:bg-purple-50'"
+          :style="filterQuarter.includes('Q3')?'background:#7c3aed':'background:white'"
+          class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors">Q3</button>
+        <button @click="toggleQuarter('Q4')"
+          :class="filterQuarter.includes('Q4')?'text-white':'text-slate-500 border border-slate-200 hover:bg-rose-50'"
+          :style="filterQuarter.includes('Q4')?'background:#be123c':'background:white'"
+          class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors">Q4</button>
+      </div>
+      <select x-model="filterStage" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none">
+        <option value="">All Stages</option>
+        <option value="Technical Win">✅ Tech Win</option>
+        <option value="Final Due">🔵 Final DD</option>
+        <option value="Scoping">🟡 Scoping</option>
+        <option value="Zombies">⚠️ Zombies</option>
+        <option value="Loss">🚫 No Bid</option>
+      </select>
+      <label class="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+        <input type="checkbox" x-model="filterWarnings" /> ⚠️ Warnings only
+      </label>
+      <label class="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+        <input type="checkbox" x-model="filter100k" /> &gt;$100K only
+      </label>
+      <!-- Columns picker -->
+      <div class="relative ml-auto" @click.outside="colPickerOpen=false">
+        <button @click="colPickerOpen=!colPickerOpen"
+          :class="colPickerOpen?'bg-slate-700 text-white':'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'"
+          class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors">
+          <span>Columns</span>
+          <span x-text="'('+visibleCols().length+')'"></span>
+          <span x-text="colPickerOpen?'▲':'▼'" class="text-xs opacity-60"></span>
+        </button>
+        <div x-show="colPickerOpen" x-cloak
+          class="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-30 py-1 min-w-44">
+          <template x-for="col in dealColumns" :key="col">
+            <label class="flex items-center gap-2.5 px-3 py-1.5 hover:bg-slate-50 cursor-pointer"
+                   :class="col==='name'?'opacity-40 cursor-not-allowed':''">
+              <input type="checkbox" :checked="!hiddenCols[col]" @change="toggleCol(col)" :disabled="col==='name'"
+                class="rounded" />
+              <span class="text-xs text-slate-700" x-text="dealColLabel(col)"></span>
+            </label>
+          </template>
+        </div>
+      </div>
+      <span class="text-xs text-slate-400" x-text="filteredDeals().length+' / '+deals.length"></span>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-slate-50 border-b border-slate-200">
+            <tr>
+              <template x-for="col in visibleCols()" :key="col">
+                <th draggable="true"
+                    @dragstart="colDragStart(col)"
+                    @dragover="colDragOver($event, col)"
+                    @drop="colDrop(col)"
+                    @dragend="colDragEnd()"
+                    :class="{'opacity-40 bg-indigo-50': draggingCol===col, 'bg-indigo-100': dragOverColId===col && draggingCol!==col}"
+                    class="cursor-grab select-none"
+                    :style="col==='name'?'min-width:180px':col==='vfNote'||col==='seNote'?'min-width:160px':col==='amount'?'text-align:right':''">
+                  <span x-show="dealColSortKey(col)" @click.stop="sort(dealColSortKey(col))" class="cursor-pointer">
+                    <span x-text="dealColLabel(col)"></span>
+                    <span class="opacity-40" x-text="sortCol===dealColSortKey(col)?(sortAsc?'↑':'↓'):'↕'"></span>
+                  </span>
+                  <span x-show="!dealColSortKey(col)" x-text="dealColLabel(col)"></span>
+                  <span class="ml-1 text-slate-300 text-xs" title="Drag to reorder">⠿</span>
+                </th>
+              </template>
+              <th class="w-6"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="deal in filteredDeals()" :key="deal.name">
+              <tr class="cursor-pointer" @click="openModal(deal)">
+                <template x-for="col in visibleCols()" :key="col">
+                  <td :style="col==='amount'?'text-align:right;white-space:nowrap':col==='closeDate'||col==='techWinDate'||col==='platform'||col==='se'?'white-space:nowrap':''">
+
+                    <!-- name -->
+                    <div x-show="col==='name'" class="flex items-center gap-2">
+                      <div class="font-medium text-slate-900 text-sm" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" x-text="deal.name"></div>
+                      <span x-show="hasPendingUpdate(deal.name)" style="background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:9999px;font-size:.65rem;font-weight:600">✏️</span>
+                    </div>
+
+                    <!-- amount -->
+                    <span x-show="col==='amount'" class="font-semibold tabular-nums" :class="deal.amount>=500000?'text-emerald-700':deal.amount>=150000?'text-blue-700':'text-slate-700'" x-text="fmt(deal.amount)"></span>
+
+                    <!-- closeDate -->
+                    <span x-show="col==='closeDate'" :class="isOverdue(deal.closeDate)?'text-red-600 font-semibold':''" x-text="fmtDate(deal.closeDate)"></span>
+                    <span x-show="col==='closeDate' && isOverdue(deal.closeDate)" class="ml-1 text-red-400 text-xs">⚠</span>
+
+                    <!-- quarter -->
+                    <span x-show="col==='quarter'" class="badge" :style="deal.quarter==='Q2'?'background:#dbeafe;color:#1d4ed8':deal.quarter==='Q3'?'background:#ede9fe;color:#6d28d9':'background:#ffe4e6;color:#be123c'" x-text="deal.quarter"></span>
+
+                    <!-- platform -->
+                    <span x-show="col==='platform'" class="badge" :style="deal.platform==='Auth0'?'background:#ede9fe;color:#6d28d9':deal.platform==='OCI'?'background:#fce7f3;color:#9d174d':deal.platform==='Both'?'background:#d1fae5;color:#065f46':'background:#dbeafe;color:#1d4ed8'" x-text="deal.platform||'OWI'"></span>
+
+                    <!-- se -->
+                    <div x-show="col==='se' && deal.se" class="flex items-center gap-1">
+                      <span class="w-2 h-2 rounded-full" :style="'background:'+seColor(deal.se)"></span>
+                      <span class="text-sm" x-text="(deal.se||'').split(' ')[0]"></span>
+                      <span x-show="seAlignmentStatus(deal)==='match'" class="text-emerald-400 text-xs">✓</span>
+                      <span x-show="seAlignmentStatus(deal)==='mismatch'" class="text-amber-400 text-xs" :title="'Suggests: '+suggestSE(deal)">⚠️</span>
+                    </div>
+                    <div x-show="col==='se' && !deal.se">
+                      <span style="background:#fee2e2;color:#dc2626" class="badge">⚠️ None</span>
+                      <div x-show="suggestSE(deal)" class="text-xs mt-0.5 font-semibold" :style="'color:'+seColor(suggestSE(deal))" x-text="'→ '+(suggestSE(deal)||'').split(' ')[0]"></div>
+                    </div>
+
+                    <!-- stage -->
+                    <span x-show="col==='stage'" class="badge" :class="stageBadgeClass(deal.presalesStage)" :style="stageBgStyle(deal.presalesStage)" x-text="stageShort(deal.presalesStage)"></span>
+
+                    <!-- techWinDate -->
+                    <div x-show="col==='techWinDate' && deal.techWinDate">
+                      <div class="text-sm" x-text="fmtDate(deal.techWinDate)"></div>
+                      <div x-show="techWinStatus(deal)==='danger'" style="background:#fee2e2;color:#dc2626;font-size:.65rem" class="badge mt-0.5">🚨 after close</div>
+                      <div x-show="techWinStatus(deal)==='warn'" style="background:#fef3c7;color:#92400e;font-size:.65rem" class="badge mt-0.5" x-text="'⚠️ '+techWinGap(deal)+'d buffer'"></div>
+                      <div x-show="techWinStatus(deal)==='ok'" class="text-xs text-emerald-600 mt-0.5" x-text="'✅ '+techWinGap(deal)+'d'"></div>
+                    </div>
+                    <span x-show="col==='techWinDate' && !deal.techWinDate" class="text-xs text-slate-400 italic">TBD</span>
+
+                    <!-- seNote -->
+                    <p x-show="col==='seNote' && deal.seNotes" class="text-xs text-slate-700 line-clamp-2" style="max-width:180px" x-text="latestNote(deal.seNotes)"></p>
+                    <span x-show="col==='seNote' && !deal.seNotes" class="text-xs text-slate-300">—</span>
+
+                    <!-- vfNote -->
+                    <p x-show="col==='vfNote'" class="text-xs text-slate-600 line-clamp-2" style="max-width:200px" x-text="deal.vfNotes||'—'"></p>
+
+                    <!-- sfdc link -->
+                    <div x-show="col==='sfdc'">
+                      <a x-show="deal.sfdcId" :href="sfdcUrl(deal.sfdcId,'opportunity')" target="_blank" rel="noopener"
+                         @click.stop class="text-blue-500 hover:text-blue-700 text-xs font-medium flex items-center gap-1">
+                        <span>↗</span><span>Open</span>
+                      </a>
+                      <span x-show="!deal.sfdcId" class="text-slate-300 text-xs">—</span>
+                    </div>
+
+                  </td>
+                </template>
+                <td class="text-slate-300 hover:text-blue-500">›</td>
+              </tr>
+            </template>
+            <tr x-show="filteredDeals().length===0">
+              <td :colspan="visibleCols().length+1" style="text-align:center;color:#94a3b8;padding:3rem">No deals match your filters.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- Events Tab -->
+  <div x-show="activeTab==='events'" x-cloak>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="p-5 border-b">
+        <h2 class="text-base font-semibold text-slate-800">FY27 LATAM Events &amp; Team Coverage</h2>
+        <p class="text-xs text-slate-500 mt-1">Sources: Vania De Rosas marketing events sheet · Team LATAM SEs Weekly Notes doc · Navan travel confirmations</p>
+        <div class="flex flex-wrap items-center gap-1.5 mt-3">
+          <span class="text-xs text-slate-400 font-medium mr-1">Filter:</span>
+          <button @click="filterEventType=[]"
+            :class="filterEventType.length===0?'bg-slate-700 text-white':'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'"
+            class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors">All</button>
+          <button @click="toggleEventType('Partner Event')"
+            :class="filterEventType.includes('Partner Event')?'text-white bg-blue-600':'bg-white text-slate-500 border border-slate-200 hover:bg-blue-50'"
+            class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors">🤝 Partner</button>
+          <button @click="toggleEventType('Industry Event')"
+            :class="filterEventType.includes('Industry Event')?'text-white bg-emerald-600':'bg-white text-slate-500 border border-slate-200 hover:bg-emerald-50'"
+            class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors">📊 Industry</button>
+          <button @click="toggleEventType('Customer Visit')"
+            :class="filterEventType.includes('Customer Visit')?'text-white bg-amber-600':'bg-white text-slate-500 border border-slate-200 hover:bg-amber-50'"
+            class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors">🏢 Customer Visit</button>
+                    <button @click="toggleOkta()"
+            :class="hasOkta()?'text-white bg-indigo-600':'bg-white text-slate-500 border border-slate-200 hover:bg-indigo-50'"
+            class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors">🛫 Okta</button>
+          <span class="text-xs text-slate-400 ml-1" x-text="filteredEvents().length+' / '+events.length+' events'"></span>
+          <select x-model="filterEventMonth"
+            class="ml-auto text-xs border border-slate-200 rounded-lg px-2.5 py-1 text-slate-600 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer"
+            :class="filterEventMonth?'border-slate-500 font-semibold text-slate-800':''">
+            <option value="">All Months</option>
+            <template x-for="m in availableMonths()" :key="m">
+              <option :value="m" x-text="m+' 2026'"></option>
+            </template>
+          </select>
+        </div>
+        <div class="flex flex-wrap items-center gap-1.5 mt-2">
+          <span class="text-xs text-slate-400 font-medium mr-1">SE:</span>
+          <button @click="filterEventSE=[]"
+            :class="filterEventSE.length===0?'bg-slate-700 text-white':'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'"
+            class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors">All</button>
+          <template x-for="se in seList" :key="se.name">
+            <button @click="toggleEventSE(se.name)"
+              :class="filterEventSE.includes(se.name)?'text-white':'text-slate-500 border border-slate-200'"
+              :style="filterEventSE.includes(se.name)?'background:'+se.color:'background:white'"
+              class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
+              x-text="se.name.split(' ')[0]"></button>
+          </template>
+        </div>
+      </div>
+      <div>
+        <template x-for="group in eventsByMonth()" :key="group.month">
+          <div>
+            <!-- Month header -->
+            <div class="flex items-center gap-3 px-5 py-2 bg-slate-50 border-y border-slate-200 sticky top-0 z-10">
+              <span class="text-xs font-bold text-slate-500 uppercase tracking-wider w-8" x-text="group.month"></span>
+              <div class="flex-1 h-px bg-slate-200"></div>
+              <span class="text-xs text-slate-400" x-text="group.events.length+' event'+(group.events.length!==1?'s':'')"></span>
+            </div>
+            <!-- Events for this month -->
+            <template x-for="ev in group.events" :key="ev.name">
+              <div class="border-b border-slate-100 last:border-0">
+                <!-- Main event row -->
+                <div class="flex items-start gap-4 px-5 py-3 hover:bg-slate-50">
+                  <div class="text-2xl w-10 text-center flex-shrink-0 mt-0.5" x-text="ev.icon"></div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-sm font-semibold text-slate-800" x-text="ev.name"></div>
+                    <div class="text-xs text-slate-500 mt-0.5" x-text="ev.date+' · '+ev.location"></div>
+                    <div x-show="ev.notes" class="text-xs text-slate-400 italic mt-0.5" x-text="ev.notes"></div>
+                  </div>
+                  <div class="text-xs text-slate-400 w-24 text-right flex-shrink-0 mt-0.5" x-text="ev.type"></div>
+                  <div class="flex gap-1.5 flex-wrap justify-end min-w-32">
+                    <template x-for="se in ev.team" :key="se">
+                      <span class="badge text-white text-xs" :style="'background:'+seColor(se)" x-text="se.split(' ')[0]"></span>
+                    </template>
+                    <span x-show="ev.team.length===0" class="text-xs text-slate-400 italic">TBD</span>
+                  </div>
+                </div>
+                <!-- Travel status row (only if travel data exists) -->
+                <div x-show="ev.travel&&ev.travel.length>0" class="px-5 pb-3 pt-0">
+                  <div class="bg-slate-50 rounded-xl overflow-hidden border border-slate-100">
+                    <table class="w-full text-xs" style="table-layout:fixed">
+                      <colgroup>
+                        <col style="width:13%">
+                        <col style="width:49%">
+                        <col style="width:38%">
+                      </colgroup>
+                      <thead>
+                        <tr style="background:#f1f5f9">
+                          <th class="text-left px-3 py-1.5 font-semibold text-slate-500">SE</th>
+                          <th class="text-left px-3 py-1.5 font-semibold text-slate-500">✈️ Flight</th>
+                          <th class="text-left px-3 py-1.5 font-semibold text-slate-500">🏨 Hotel</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <template x-for="t in ev.travel" :key="t.se">
+                          <tr :class="t.status==='alert'?'bg-red-50':t.status==='missing'?'bg-amber-50':''">
+                            <td class="px-3 py-1.5 font-semibold truncate" :style="'color:'+seColor(t.se)" x-text="t.se.split(' ')[0]"></td>
+                            <td class="px-3 py-1.5 text-slate-600 truncate" x-text="t.flight"></td>
+                            <td class="px-3 py-1.5 text-slate-600 truncate" x-text="t.hotel"></td>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- Projects Tab -->
+  <div x-show="activeTab==='initiatives'" x-cloak>
+    <!-- Filter bar -->
+    <div class="flex flex-wrap items-center gap-2 mb-4">
+      <span class="text-xs text-slate-500 font-medium">Status:</span>
+      <button @click="filterProjectStatus=''"
+        :class="!filterProjectStatus?'bg-slate-700 text-white':'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'"
+        class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors">All</button>
+      <template x-for="s in ['Active','Near Complete','Planning','Completed','On Hold']" :key="s">
+        <button @click="filterProjectStatus=filterProjectStatus===s?'':s"
+          :class="filterProjectStatus===s?'text-white bg-slate-700':'bg-white text-slate-500 border border-slate-200'"
+          class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors" x-text="s"></button>
+      </template>
+      <span class="text-xs text-slate-400 ml-auto" x-text="filteredProjects().length+' / '+projects.length+' projects'"></span>
+    </div>
+
+    <!-- Project cards grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <template x-for="p in filteredProjects()" :key="p.id">
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+
+          <!-- Card header -->
+          <div class="p-5 pb-3 border-b border-slate-100">
+            <div class="flex items-start justify-between gap-3 mb-2">
+              <h3 class="text-base font-bold text-slate-900 leading-snug" x-text="p.name"></h3>
+              <div class="flex gap-1.5 flex-shrink-0 flex-wrap justify-end">
+                <span class="badge text-xs" :style="statusColor(p.status)" x-text="p.status"></span>
+                <span class="badge text-xs" :style="categoryColor(p.category)" x-text="p.category"></span>
+              </div>
+            </div>
+            <p class="text-sm text-slate-600 leading-relaxed" x-text="p.description"></p>
+            <div class="flex items-center gap-3 mt-2 text-xs text-slate-400">
+              <span>👤 <span class="font-medium text-slate-600" x-text="p.owner"></span></span>
+              <template x-if="p.collaborators&&p.collaborators.length>0">
+                <span>🤝 <span x-text="p.collaborators.slice(0,3).map(c=>c.split(' ')[0]).join(', ')+(p.collaborators.length>3?' +'+( p.collaborators.length-3):'')"></span></span>
+              </template>
+              <span class="ml-auto" x-text="'Updated '+p.lastUpdated"></span>
+            </div>
+          </div>
+
+          <!-- Progress bar -->
+          <div class="px-5 py-3 border-b border-slate-100">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Progress</span>
+              <span class="text-sm font-bold" :class="p.progress>=75?'text-emerald-600':p.progress>=40?'text-blue-600':'text-amber-600'" x-text="p.progress+'%'"></span>
+            </div>
+            <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-500"
+                   :class="p.progress>=75?'bg-emerald-500':p.progress>=40?'bg-blue-500':'bg-amber-400'"
+                   :style="'width:'+p.progress+'%'"></div>
+            </div>
+            <p class="text-xs text-slate-500 mt-1.5 italic" x-text="p.progressNote"></p>
+          </div>
+
+          <!-- Objectives + Measurement collapsible -->
+          <div class="px-5 py-3 border-b border-slate-100">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">Objectives</div>
+                <ul class="space-y-1">
+                  <template x-for="obj in p.objectives" :key="obj">
+                    <li class="text-xs text-slate-600 flex gap-1.5"><span class="text-slate-300 flex-shrink-0">•</span><span x-text="obj"></span></li>
+                  </template>
+                </ul>
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">Measurement</div>
+                <ul class="space-y-1">
+                  <template x-for="m in p.measurement" :key="m">
+                    <li class="text-xs text-slate-600 flex gap-1.5"><span class="text-slate-300 flex-shrink-0">📊</span><span x-text="m"></span></li>
+                  </template>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Next steps (suggestions) -->
+          <div class="px-5 py-3 flex-1">
+            <div class="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-1.5">💡 Suggested Next Steps</div>
+            <ul class="space-y-1">
+              <template x-for="(step, i) in p.nextSteps" :key="i">
+                <li class="text-xs text-slate-700 flex gap-2">
+                  <span class="text-amber-400 font-bold flex-shrink-0" x-text="(i+1)+'.'"></span>
+                  <span x-text="step"></span>
+                </li>
+              </template>
+            </ul>
+          </div>
+
+        </div>
+      </template>
+    </div>
+
+    <div x-show="filteredProjects().length===0" class="text-center text-slate-400 py-16">No projects match the selected filter.</div>
+  </div>
+
+
+  <!-- Partners Tab -->
+  <div x-show="activeTab==='partners'" x-cloak>
+    <!-- Filter bar -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 mb-4 space-y-2">
+      <!-- Row 1: search + count -->
+      <div class="flex gap-2 items-center">
+        <div class="relative flex-1 min-w-48">
+          <input type="text" placeholder="Search partners, country, contact name…" x-model="partnerSearch"
+            class="w-full px-3 py-1.5 pr-7 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <button x-show="partnerSearch" @click="partnerSearch=''"
+            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm leading-none">✕</button>
+        </div>
+        <span class="text-xs text-slate-400 flex-shrink-0" x-text="filteredPartners().length+' / '+partners.length+' partners'"></span>
+      </div>
+      <!-- Row 2: Type + Level + GSI -->
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <!-- Type -->
+        <div class="flex items-center gap-1">
+          <span class="text-xs text-slate-400 font-medium">Type:</span>
+          <button @click="filterPartnerType=''"
+            :class="!filterPartnerType?'bg-slate-700 text-white':'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'"
+            class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors">All</button>
+          <template x-for="t in ['Reseller','Distributor']" :key="t">
+            <button @click="filterPartnerType=filterPartnerType===t?'':t"
+              :class="filterPartnerType===t?'bg-slate-700 text-white':'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'"
+              class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors" x-text="t"></button>
+          </template>
+        </div>
+        <!-- Level -->
+        <div class="flex items-center gap-1">
+          <span class="text-xs text-slate-400 font-medium">Tier:</span>
+          <button @click="filterPartnerTier=''"
+            :class="!filterPartnerTier?'bg-slate-700 text-white':'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'"
+            class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors">All</button>
+          <template x-for="tier in ['Apex','Amplify','Activate','Incubate','Distributor']" :key="tier">
+            <button @click="filterPartnerTier=filterPartnerTier===tier?'':tier"
+              :class="filterPartnerTier===tier?'text-white':'text-slate-500 border border-slate-200 hover:bg-slate-50'"
+              :style="filterPartnerTier===tier?tierColor(tier):''"
+              class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors" x-text="tier"></button>
+          </template>
+        </div>
+        <!-- GSI toggle -->
+        <div class="flex items-center gap-1">
+          <span class="text-xs text-slate-400 font-medium">GSI:</span>
+          <button @click="filterPartnerGSI=!filterPartnerGSI"
+            :class="filterPartnerGSI?'bg-indigo-600 text-white':'bg-white text-slate-500 border border-slate-200 hover:bg-indigo-50'"
+            class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors">🏢 GSI only</button>
+        </div>
+        <!-- Sort -->
+        <div class="flex items-center gap-1 ml-auto">
+          <span class="text-xs text-slate-400 font-medium">Sort:</span>
+          <template x-for="[val,label] in [['relevance','⭐ Relevance'],['revenue','💰 Revenue'],['tier','🏅 Tier'],['name','A–Z'],['country','🌎 Country']]" :key="val">
+            <button @click="sortPartners=val"
+              :class="sortPartners===val?'bg-slate-700 text-white':'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'"
+              class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors" x-text="label"></button>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Partner cards -->
+    <div class="space-y-2">
+      <template x-for="p in filteredPartners()" :key="p.id">
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+
+          <!-- Header row — always visible, click to expand -->
+          <div class="px-5 py-3.5 flex flex-wrap items-center gap-3 cursor-pointer hover:bg-slate-50 transition-colors select-none"
+               @click="expandedPartners[p.id]=!expandedPartners[p.id]">
+
+            <!-- Chevron -->
+            <span class="text-slate-400 flex-shrink-0 transition-transform duration-200"
+                  :class="expandedPartners[p.id]?'rotate-90':''"
+                  style="font-size:12px">▶</span>
+
+            <!-- Name + badges -->
+            <div class="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+              <h3 class="text-sm font-bold text-slate-900" x-text="p.name"></h3>
+              <a x-show="p.sfdcId" :href="sfdcUrl(p.sfdcId,'account')" target="_blank" rel="noopener"
+                 @click.stop class="text-blue-400 hover:text-blue-600 text-xs" title="Open in Salesforce">↗</a>
+              <span class="badge text-xs" :style="tierColor(p.tier)" x-text="p.tier"></span>
+              <span x-show="p.type==='Distributor'" class="badge text-xs" style="background:#d1fae5;color:#065f46">🏭 Dist.</span>
+              <span x-show="p.gsi" class="badge text-xs" style="background:#ede9fe;color:#5b21b6">🏢 GSI</span>
+              <!-- "via contact" chip when search matches a contact, not the partner name -->
+              <template x-if="partnerSearch && !p.name.toLowerCase().includes(partnerSearch.toLowerCase()) && !p.country.toLowerCase().includes(partnerSearch.toLowerCase())">
+                <span class="text-xs px-1.5 py-0.5 rounded-full font-semibold" style="background:#fef9c3;color:#92400e"
+                  x-text="'👤 ' + ((p.contacts||[]).find(c=>(c.name||'').toLowerCase().includes(partnerSearch.toLowerCase()))?.name || 'contact match')">
+                </span>
+              </template>
+            </div>
+
+            <!-- Meta line -->
+            <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-500 flex-shrink-0">
+              <span>🌎 <span x-text="p.country"></span></span>
+              <span x-show="p.revenueCurrentYear">💰 <span class="font-semibold text-slate-700" x-text="fmt$(p.revenueCurrentYear)"></span></span>
+              <span x-show="p.accountOwner" class="text-slate-400">Owner: <span class="font-medium text-slate-600" x-text="p.accountOwner"></span></span>
+              <span x-show="p.oktaSE" class="text-slate-400">SE: <span class="font-medium text-slate-600" x-text="p.oktaSE"></span></span>
+            </div>
+
+            <!-- Right: counts -->
+            <div class="text-right text-xs text-slate-400 flex-shrink-0 flex items-center gap-2">
+              <span x-show="(p.contacts||[]).filter(c=>c.oktaCertPro||c.oktaCertAdmin||c.presalesAccred).length>0"
+                    class="text-emerald-600 font-semibold"
+                    x-text="(p.contacts||[]).filter(c=>c.oktaCertPro||c.oktaCertAdmin||c.presalesAccred).length+' cert'"></span>
+              <span x-text="(p.contacts||[]).length+' contacts'"></span>
+            </div>
+          </div>
+
+          <!-- Body — shown only when expanded -->
+          <div x-show="expandedPartners[p.id]" x-collapse class="border-t border-slate-100">
+            <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+
+              <!-- Contacts -->
+              <div class="p-4">
+                <div class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">Technical Contacts</div>
+                <div class="space-y-2">
+                  <template x-for="c in (p.contacts||[])" :key="c.email||c.name">
+                    <div class="flex-1 min-w-0 rounded-lg px-2 py-1"
+                         :class="partnerSearch && ((c.name||'').toLowerCase().includes(partnerSearch.toLowerCase()) || (c.title||'').toLowerCase().includes(partnerSearch.toLowerCase()) || (c.email||'').toLowerCase().includes(partnerSearch.toLowerCase())) ? 'bg-yellow-50 ring-1 ring-yellow-200' : ''">
+                      <div class="text-sm font-medium text-slate-800 flex items-center gap-1 flex-wrap">
+                        <span x-text="c.name"></span>
+                        <span x-show="c.oktaCertPro" class="text-xs px-1 py-0.5 rounded font-semibold" style="background:#d1fae5;color:#065f46">OCP</span>
+                        <span x-show="c.oktaCertAdmin" class="text-xs px-1 py-0.5 rounded font-semibold" style="background:#dbeafe;color:#1e40af">OCA</span>
+                        <span x-show="c.presalesAccred" class="text-xs px-1 py-0.5 rounded font-semibold" style="background:#fef3c7;color:#92400e">PSA</span>
+                      </div>
+                      <div class="text-xs text-slate-500" x-text="c.title||''"></div>
+                      <a x-show="c.email" :href="'mailto:'+c.email" class="text-xs text-blue-500 hover:underline" x-text="c.email"></a>
+                    </div>
+                  </template>
+                  <div x-show="!(p.contacts||[]).length" class="text-xs text-slate-400 italic">No contacts on file</div>
+                </div>
+              </div>
+
+              <!-- Active deals + initiatives -->
+              <div class="p-4">
+                <div class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">Active Deals</div>
+                <ul class="space-y-1 mb-3">
+                  <template x-for="d in (p.activeDeals||[])" :key="d">
+                    <li class="text-xs text-slate-700 flex gap-1.5"><span class="text-blue-400 flex-shrink-0">▸</span><span x-text="d"></span></li>
+                  </template>
+                  <li x-show="!(p.activeDeals||[]).length" class="text-xs text-slate-400 italic">No active deals</li>
+                </ul>
+                <div class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Initiatives</div>
+                <ul class="space-y-1">
+                  <template x-for="i in (p.initiatives||[])" :key="i">
+                    <li class="text-xs text-slate-600 flex gap-1.5"><span class="text-emerald-400 flex-shrink-0">•</span><span x-text="i"></span></li>
+                  </template>
+                </ul>
+              </div>
+
+              <!-- Notes + next steps -->
+              <div class="p-4">
+                <div class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">Notes</div>
+                <p class="text-xs text-slate-600 leading-relaxed mb-3" x-text="p.notes||'—'"></p>
+                <div class="text-xs font-semibold uppercase tracking-wide text-amber-600 mb-1">💡 Next Steps</div>
+                <ul class="space-y-1">
+                  <template x-for="(s,i) in (p.nextSteps||[])" :key="i">
+                    <li class="text-xs text-slate-700 flex gap-1.5"><span class="text-amber-400 font-bold flex-shrink-0" x-text="(i+1)+'.'"></span><span x-text="s"></span></li>
+                  </template>
+                </ul>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </template>
+      <div x-show="filteredPartners().length===0" class="text-center text-slate-400 py-16">No partners match your search.</div>
+    </div>
+  </div>
+
+  <!-- YTD Tab -->
+  <div x-show="activeTab==='ytd'" x-cloak x-init="$watch('activeTab', v => v==='ytd' && initYtdCharts()); $watch('ytd', v => v && activeTab==='ytd' && initYtdCharts())">
+    <template x-if="ytd">
+      <div class="space-y-5">
+
+        <!-- KPI row -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="kpi-card p-4">
+            <div class="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">YTD Closed Won</div>
+            <div class="text-2xl font-bold text-slate-900" x-text="fmt$k(ytd.totalClosed)"></div>
+            <div class="text-xs text-slate-400 mt-0.5">of <span x-text="fmt$k(ytd.quota)"></span> quota</div>
+          </div>
+          <div class="kpi-card p-4">
+            <div class="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">Quota Attainment</div>
+            <div class="text-2xl font-bold" :class="ytd.quotaAchievement>=75?'text-emerald-600':ytd.quotaAchievement>=50?'text-blue-600':'text-amber-600'" x-text="ytd.quotaAchievement+'%'"></div>
+            <div class="mt-1.5 h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-700" :class="ytd.quotaAchievement>=75?'bg-emerald-500':ytd.quotaAchievement>=50?'bg-blue-500':'bg-amber-400'" :style="'width:'+Math.min(ytd.quotaAchievement,100)+'%'"></div>
+            </div>
+          </div>
+          <div class="kpi-card p-4">
+            <div class="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">New Business</div>
+            <div class="text-2xl font-bold text-slate-900" x-text="fmt$k(ytd.newBizTotal)"></div>
+            <div class="text-xs text-slate-400 mt-0.5" x-text="ytd.byType.find(t=>t.type==='New Business')?.count+' deals'"></div>
+          </div>
+          <div class="kpi-card p-4">
+            <div class="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">Total Deals</div>
+            <div class="text-2xl font-bold text-slate-900" x-text="ytd.dealCount"></div>
+            <div class="text-xs text-slate-400 mt-0.5" x-text="'Last updated: '+ytd.lastUpdated"></div>
+          </div>
+        </div>
+
+        <!-- SE Attainment vs Individual Goals -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+          <h2 class="text-sm font-semibold text-slate-800 mb-4">👤 SE Contribution vs Individual ARR Goal</h2>
+          <div class="space-y-3">
+            <template x-for="row in ytd.bySE" :key="row.se">
+              <div x-data="{ att: ytdSeAttainment(row.se) }">
+                <div class="flex items-center justify-between mb-1">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :style="'background:'+seColor(row.se)"></span>
+                    <span class="text-sm font-medium text-slate-700" x-text="row.se"></span>
+                    <span x-show="att && att.pct>=100" class="text-xs px-1.5 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-700">🏆 Target Hit</span>
+                  </div>
+                  <div class="text-right text-xs text-slate-500">
+                    <span class="font-semibold text-slate-800" x-text="fmt$k(row.amount)"></span>
+                    <span x-show="att"> / <span x-text="fmt$k(att?.target)"></span> goal (<span x-text="att?.pct+'%'" :class="att?.pct>=100?'text-emerald-600 font-bold':att?.pct>=50?'text-blue-600':'text-amber-600'"></span>)</span>
+                  </div>
+                </div>
+                <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full transition-all duration-700 relative"
+                       :style="'width:'+Math.min(att ? att.pct : 100, 100)+'%;background:'+seColor(row.se)"></div>
+                </div>
+                <div x-show="att" class="text-xs text-slate-400 mt-0.5" x-text="att ? fmt$k(att.target - att.amount > 0 ? att.target - att.amount : 0)+' remaining to goal' : ''"></div>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- Charts grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+          <!-- SE bar chart -->
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+            <h2 class="text-sm font-semibold text-slate-800 mb-3">💰 Closed Won by SE vs Target</h2>
+            <canvas id="chart-se" height="200"></canvas>
+          </div>
+
+          <!-- Quarter trend -->
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+            <h2 class="text-sm font-semibold text-slate-800 mb-3">📅 Closed Won by Quarter</h2>
+            <canvas id="chart-quarter" height="200"></canvas>
+          </div>
+
+          <!-- Type doughnut -->
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+            <h2 class="text-sm font-semibold text-slate-800 mb-3">🔄 By Business Type</h2>
+            <div class="max-w-xs mx-auto"><canvas id="chart-type" height="220"></canvas></div>
+            <div class="mt-2 space-y-1">
+              <template x-for="t in ytd.byType" :key="t.type">
+                <div class="flex justify-between text-xs text-slate-600">
+                  <span x-text="t.type+' ('+t.count+' deals)'"></span>
+                  <span class="font-semibold" x-text="fmt$k(t.amount)"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Platform doughnut -->
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+            <h2 class="text-sm font-semibold text-slate-800 mb-3">🛠 By Platform</h2>
+            <div class="max-w-xs mx-auto"><canvas id="chart-platform" height="220"></canvas></div>
+            <div class="mt-2 space-y-1">
+              <template x-for="p in ytd.byPlatform" :key="p.platform">
+                <div class="flex justify-between text-xs text-slate-600">
+                  <span x-text="p.platform+' ('+p.count+' deals)'"></span>
+                  <span class="font-semibold" x-text="fmt$k(p.amount)"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Deal table -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <!-- Header + filters -->
+          <div class="px-5 py-3 border-b border-slate-100">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <h2 class="text-sm font-semibold text-slate-800">📋 All Closed-Won Deals FY27</h2>
+              <div class="flex flex-wrap items-center gap-2">
+
+                <!-- Type dropdown -->
+                <div class="relative" x-data="{open:false}" @click.outside="open=false">
+                  <button @click="open=!open"
+                    :class="ytdFilterTypes.length?'border-indigo-400 text-indigo-700 font-semibold':'text-slate-500'"
+                    class="flex items-center gap-1 px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors whitespace-nowrap">
+                    <span x-text="ytdFilterTypes.length?'Type ('+ytdFilterTypes.length+')':'Type'"></span>
+                    <span class="opacity-40 text-xs" x-text="open?'▲':'▼'"></span>
+                  </button>
+                  <div x-show="open" class="absolute left-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-30 py-1 min-w-36">
+                    <template x-for="t in ['New Business','Upsell','Renewal']" :key="t">
+                      <label class="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
+                        <input type="checkbox" :checked="ytdFilterTypes.includes(t)" @change="ytdToggle(ytdFilterTypes,t)" class="rounded" />
+                        <span x-text="t"></span>
+                      </label>
+                    </template>
+                    <div class="border-t border-slate-100 mt-1 pt-1 px-2">
+                      <button @click="ytdFilterTypes=[];open=false" class="text-xs text-slate-400 hover:text-slate-600">Clear</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Platform dropdown -->
+                <div class="relative" x-data="{open:false}" @click.outside="open=false">
+                  <button @click="open=!open"
+                    :class="ytdFilterPlatforms.length?'border-indigo-400 text-indigo-700 font-semibold':'text-slate-500'"
+                    class="flex items-center gap-1 px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors whitespace-nowrap">
+                    <span x-text="ytdFilterPlatforms.length?'Platform ('+ytdFilterPlatforms.length+')':'Platform'"></span>
+                    <span class="opacity-40 text-xs" x-text="open?'▲':'▼'"></span>
+                  </button>
+                  <div x-show="open" class="absolute left-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-30 py-1 min-w-32">
+                    <template x-for="pl in ['OWI','Auth0','OCI']" :key="pl">
+                      <label class="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
+                        <input type="checkbox" :checked="ytdFilterPlatforms.includes(pl)" @change="ytdToggle(ytdFilterPlatforms,pl)" class="rounded" />
+                        <span x-text="pl"></span>
+                      </label>
+                    </template>
+                    <div class="border-t border-slate-100 mt-1 pt-1 px-2">
+                      <button @click="ytdFilterPlatforms=[];open=false" class="text-xs text-slate-400 hover:text-slate-600">Clear</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Quarter dropdown -->
+                <div class="relative" x-data="{open:false}" @click.outside="open=false">
+                  <button @click="open=!open"
+                    :class="ytdFilterQs.length?'border-indigo-400 text-indigo-700 font-semibold':'text-slate-500'"
+                    class="flex items-center gap-1 px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors whitespace-nowrap">
+                    <span x-text="ytdFilterQs.length?'Quarter ('+ytdFilterQs.length+')':'Quarter'"></span>
+                    <span class="opacity-40 text-xs" x-text="open?'▲':'▼'"></span>
+                  </button>
+                  <div x-show="open" class="absolute left-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-30 py-1 min-w-28">
+                    <template x-for="q in ['Q1','Q2','Q3','Q4']" :key="q">
+                      <label class="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
+                        <input type="checkbox" :checked="ytdFilterQs.includes(q)" @change="ytdToggle(ytdFilterQs,q)" class="rounded" />
+                        <span x-text="q"></span>
+                      </label>
+                    </template>
+                    <div class="border-t border-slate-100 mt-1 pt-1 px-2">
+                      <button @click="ytdFilterQs=[];open=false" class="text-xs text-slate-400 hover:text-slate-600">Clear</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Lead SE dropdown -->
+                <div class="relative" x-data="{open:false}" @click.outside="open=false">
+                  <button @click="open=!open"
+                    :class="ytdFilterSEs.length?'border-indigo-400 text-indigo-700 font-semibold':'text-slate-500'"
+                    class="flex items-center gap-1 px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors whitespace-nowrap">
+                    <span x-text="ytdFilterSEs.length?'Lead SE ('+ytdFilterSEs.length+')':'Lead SE'"></span>
+                    <span class="opacity-40 text-xs" x-text="open?'▲':'▼'"></span>
+                  </button>
+                  <div x-show="open" class="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-30 py-1 min-w-36">
+                    <label class="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-xs text-slate-400">
+                      <input type="checkbox" :checked="ytdFilterSEs.includes('none')" @change="ytdToggle(ytdFilterSEs,'none')" class="rounded" />
+                      <span class="italic">No SE</span>
+                    </label>
+                    <template x-for="se in seList" :key="se.match">
+                      <label class="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-xs">
+                        <input type="checkbox" :checked="ytdFilterSEs.includes(se.match)" @change="ytdToggle(ytdFilterSEs,se.match)" class="rounded" />
+                        <span class="w-2 h-2 rounded-full flex-shrink-0" :style="'background:'+se.color"></span>
+                        <span class="text-slate-700" x-text="se.name.split(' ')[0]"></span>
+                      </label>
+                    </template>
+                    <div class="border-t border-slate-100 mt-1 pt-1 px-2">
+                      <button @click="ytdFilterSEs=[];open=false" class="text-xs text-slate-400 hover:text-slate-600">Clear</button>
+                    </div>
+                  </div>
+                </div>
+
+                <button x-show="ytdFilterTypes.length||ytdFilterPlatforms.length||ytdFilterSEs.length||ytdFilterQs.length"
+                  @click="ytdFilterTypes=[];ytdFilterPlatforms=[];ytdFilterSEs=[];ytdFilterQs=[]"
+                  class="text-xs text-red-400 hover:text-red-600 font-medium">✕ Clear all</button>
+
+                <span class="text-xs text-slate-400" x-text="ytdFilteredDeals().length+' / '+ytd.dealCount"></span>
+              </div>
+            </div>
+          </div>
+          <!-- Table — fixed height, scrolls internally -->
+          <div style="height:1040px;overflow-x:auto;overflow-y:auto">
+            <table class="w-full text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-100" style="position:sticky;top:0;z-index:1">
+                  <th class="text-left px-4 py-2 font-semibold text-slate-500 bg-slate-50">Opportunity</th>
+                  <th class="text-left px-4 py-2 font-semibold text-slate-500 bg-slate-50">Lead SE</th>
+                  <th class="text-left px-4 py-2 font-semibold text-slate-500 bg-slate-50">Type</th>
+                  <th class="text-left px-4 py-2 font-semibold text-slate-500 bg-slate-50">Platform</th>
+                  <th @click="ytdSort('amount')" class="text-right px-4 py-2 font-semibold text-slate-500 cursor-pointer hover:text-slate-800 select-none bg-slate-50">
+                    Amount <span class="opacity-50" x-text="ytdSortIcon('amount')"></span>
+                  </th>
+                  <th @click="ytdSort('date')" class="text-left px-4 py-2 font-semibold text-slate-500 cursor-pointer hover:text-slate-800 select-none bg-slate-50">
+                    Close <span class="opacity-50" x-text="ytdSortIcon('date')"></span>
+                  </th>
+                  <th class="text-left px-4 py-2 font-semibold text-slate-500 bg-slate-50">Q</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-50">
+                <template x-for="(d,i) in ytdFilteredDeals()" :key="i">
+                  <tr class="hover:bg-slate-50">
+                    <td class="px-4 py-2 text-slate-700 max-w-xs truncate" x-text="d.name"></td>
+                    <td class="px-4 py-2">
+                      <span x-show="d.se" class="font-semibold" :style="'color:'+seColor(d.se)" x-text="(d.se||'').split(' ')[0]"></span>
+                      <span x-show="!d.se" class="text-slate-300 italic">—</span>
+                    </td>
+                    <td class="px-4 py-2">
+                      <span class="px-1.5 py-0.5 rounded-full text-xs font-semibold"
+                            :class="d.type==='New Business'?'bg-blue-100 text-blue-700':d.type==='Upsell'?'bg-emerald-100 text-emerald-700':'bg-slate-100 text-slate-500'"
+                            x-text="d.type"></span>
+                    </td>
+                    <td class="px-4 py-2 text-slate-500" x-text="d.platform||'OWI'"></td>
+                    <td class="px-4 py-2 text-right font-semibold text-slate-800" x-text="fmt$k(d.amount)"></td>
+                    <td class="px-4 py-2 text-slate-400" x-text="d.date"></td>
+                    <td class="px-4 py-2"><span class="font-semibold text-slate-500" x-text="d.quarter"></span></td>
+                  </tr>
+                </template>
+                <tr x-show="ytdFilteredDeals().length===0">
+                  <td colspan="7" class="px-4 py-8 text-center text-slate-400 italic">No deals match the selected filters.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </template>
+    <div x-show="!ytd" class="text-center text-slate-400 py-16">Loading YTD data…</div>
+  </div>
+
+  <!-- People Tab -->
+  <div x-show="activeTab==='people'" x-cloak>
+    <div class="space-y-3">
+      <template x-for="person in people" :key="person.id">
+        <div class="bg-white rounded-xl border shadow-sm overflow-hidden"
+             :class="person.type==='manager'?'border-slate-300':'border-slate-200'">
+
+          <!-- Header — always visible, click to expand -->
+          <div class="px-5 py-3.5 flex flex-wrap items-center gap-3 cursor-pointer hover:bg-slate-50 transition-colors select-none"
+               :class="person.type==='manager'?'bg-slate-50':''"
+               @click="expandedPerson[person.id]=!expandedPerson[person.id]">
+
+            <!-- Avatar -->
+            <div class="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                 :style="'background:'+person.color" x-text="person.name.split(' ').map(n=>n[0]).join('').slice(0,2)"></div>
+
+            <!-- Name + role -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-sm font-bold text-slate-900" x-text="person.name"></span>
+                <span x-show="person.type==='self'" class="text-xs px-2 py-0.5 rounded-full font-semibold" style="background:#e0e7ff;color:#3730a3">You</span>
+                <span x-show="person.type==='manager'" class="text-xs px-2 py-0.5 rounded-full font-semibold" style="background:#f1f5f9;color:#475569">Manager</span>
+              </div>
+              <div class="text-xs text-slate-500 mt-0.5" x-text="person.role+' · '+person.location"></div>
+            </div>
+
+            <!-- Top-of-mind preview (first item) -->
+            <div class="hidden md:block flex-1 min-w-0 max-w-sm">
+              <p class="text-xs text-slate-500 truncate" x-text="(person.topOfMind||[])[0]||''"></p>
+            </div>
+
+            <!-- Quick stats -->
+            <div class="flex items-center gap-2 text-xs text-slate-400 flex-shrink-0">
+              <span x-show="(person.upcomingTravel||[]).length" class="flex items-center gap-1">
+                ✈️ <span x-text="(person.upcomingTravel||[]).length"></span>
+              </span>
+              <span x-show="(person.concerns||[]).length" class="text-amber-500 flex items-center gap-1">
+                ⚠️ <span x-text="(person.concerns||[]).length"></span>
+              </span>
+              <span class="transition-transform duration-200 text-slate-300" :class="expandedPerson[person.id]?'rotate-90':''">▶</span>
+            </div>
+          </div>
+
+          <!-- Expanded body -->
+          <div x-show="expandedPerson[person.id]" x-collapse class="border-t border-slate-100">
+            <div class="grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-slate-100">
+
+              <!-- Col 1: Top of Mind + Travel/PTO -->
+              <div class="p-4 space-y-4">
+                <div>
+                  <div class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">🧠 Top of Mind</div>
+                  <ul class="space-y-1.5">
+                    <template x-for="(item,i) in (person.topOfMind||[])" :key="i">
+                      <li class="text-xs text-slate-700 flex gap-1.5 items-start">
+                        <span class="text-slate-300 flex-shrink-0 mt-0.5">•</span>
+                        <span x-text="item"></span>
+                      </li>
+                    </template>
+                  </ul>
+                </div>
+                <div x-show="(person.upcomingTravel||[]).length">
+                  <div class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">✈️ Upcoming Travel</div>
+                  <ul class="space-y-1">
+                    <template x-for="(t,i) in (person.upcomingTravel||[])" :key="i">
+                      <li class="text-xs text-slate-600 flex gap-1.5 items-start"><span class="flex-shrink-0">—</span><span x-text="t"></span></li>
+                    </template>
+                  </ul>
+                </div>
+                <div x-show="(person.pto||[]).length">
+                  <div class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">🌴 PTO</div>
+                  <ul class="space-y-1">
+                    <template x-for="(p,i) in (person.pto||[])" :key="i">
+                      <li class="text-xs text-emerald-700" x-text="p"></li>
+                    </template>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Col 2: Goals + Certifications -->
+              <div class="p-4 space-y-4">
+                <div>
+                  <div class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">🎯 FY27 Goals</div>
+                  <div class="space-y-3">
+                    <template x-for="(g,i) in (person.goals||[])" :key="i">
+                      <div class="border-l-2 pl-2"
+                           :class="g.tracking?.status==='on-track'?'border-emerald-300':g.tracking?.status==='in-progress'?'border-amber-300':g.tracking?.status==='at-risk'?'border-red-300':'border-indigo-200'">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                          <span class="text-xs font-semibold text-slate-800" x-text="g.title"></span>
+                          <span x-show="g.tracking?.status" class="text-xs px-1.5 py-0.5 rounded-full font-semibold"
+                                :class="g.tracking?.status==='on-track'?'bg-emerald-100 text-emerald-700':g.tracking?.status==='in-progress'?'bg-amber-100 text-amber-700':g.tracking?.status==='at-risk'?'bg-red-100 text-red-700':'bg-slate-100 text-slate-500'"
+                                x-text="g.tracking?.status==='on-track'?'✓ On Track':g.tracking?.status==='in-progress'?'⏳ In Progress':g.tracking?.status==='at-risk'?'⚠️ At Risk':'—'"></span>
+                        </div>
+                        <div x-show="g.tracking?.note" class="text-xs text-slate-600 mt-0.5 italic" x-text="g.tracking?.note"></div>
+                        <div class="text-xs text-indigo-600 font-medium mt-0.5" x-text="'📏 '+g.metric"></div>
+                        <div x-show="g.tracking?.lastUpdated" class="text-xs text-slate-300 mt-0.5" x-text="'Updated '+g.tracking?.lastUpdated"></div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+                <div x-show="(person.certifications||[]).length">
+                  <div class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">🎓 Certifications</div>
+                  <ul class="space-y-1">
+                    <template x-for="(c,i) in (person.certifications||[])" :key="i">
+                      <li class="text-xs text-slate-600 flex gap-1.5"><span class="text-emerald-400">•</span><span x-text="c"></span></li>
+                    </template>
+                  </ul>
+                </div>
+                <div x-show="(person.enablement||[]).length">
+                  <div class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">📚 Enablement</div>
+                  <ul class="space-y-1">
+                    <template x-for="(e,i) in (person.enablement||[])" :key="i">
+                      <li class="text-xs text-slate-600 flex gap-1.5"><span class="text-blue-400">•</span><span x-text="e"></span></li>
+                    </template>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Col 3: Concerns + Linked Initiatives -->
+              <div class="p-4 space-y-4">
+                <div x-show="(person.concerns||[]).length">
+                  <div class="text-xs font-semibold uppercase tracking-wide text-amber-600 mb-2">⚠️ Concerns / Blockers</div>
+                  <ul class="space-y-1.5">
+                    <template x-for="(c,i) in (person.concerns||[])" :key="i">
+                      <li class="text-xs text-slate-700 flex gap-1.5 items-start">
+                        <span class="text-amber-400 flex-shrink-0 mt-0.5">▸</span>
+                        <span x-text="c"></span>
+                      </li>
+                    </template>
+                  </ul>
+                </div>
+                <div x-show="(person.linkedInitiatives||[]).length">
+                  <div class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">🚀 Initiatives</div>
+                  <ul class="space-y-1">
+                    <template x-for="(ini,i) in (person.linkedInitiatives||[])" :key="i">
+                      <li class="text-xs text-slate-600 flex gap-1.5"><span class="text-emerald-400">•</span><span x-text="ini"></span></li>
+                    </template>
+                  </ul>
+                </div>
+                <div x-show="(person.linkedDeals||[]).length">
+                  <div class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">💼 Pipeline</div>
+                  <div class="space-y-1">
+                    <template x-for="seName in (person.linkedDeals||[])" :key="seName">
+                      <div class="text-xs">
+                        <span class="font-medium text-slate-600">Active deals: </span>
+                        <span class="text-slate-500"
+                          x-text="deals.filter(d=>(d.se||'').includes(seName)).length+' opportunities · $'+Math.round(deals.filter(d=>(d.se||'').includes(seName)).reduce((s,d)=>s+d.amount,0)/1000)+'K pipeline'">
+                        </span>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Full-width 1:1 Notes row -->
+            <div class="border-t border-slate-100 px-4 py-3">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-semibold uppercase tracking-wide text-slate-400">📝 1:1 Notes &amp; Context</span>
+                <span class="text-xs italic" :class="getPeopleNoteSaved(person.id)?'text-emerald-500':'text-slate-300'"
+                      x-text="getPeopleNoteSaved(person.id) ? '✓ Saved '+getPeopleNoteSaved(person.id) : 'Unsaved'"></span>
+              </div>
+              <textarea
+                class="w-full text-sm text-slate-700 border border-slate-200 rounded-lg px-3 py-2 resize-y focus:outline-none focus:ring-1 focus:ring-indigo-400 bg-white placeholder-slate-300 leading-relaxed"
+                rows="5"
+                :placeholder="'Add 1:1 notes, action items, follow-ups, or context for '+person.name+'…'"
+                :value="getPeopleNote(person.id)"
+                @input="savePeopleNote(person.id, $event.target.value)"></textarea>
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+
+</main>
+</body>
+</html>

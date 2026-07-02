@@ -1,0 +1,12 @@
+# Sensitive data — never commit
+data/
+notes/
+
+# Dependencies
+node_modules/
+
+# OS
+.DS_Store
+
+# Logs
+*.log
