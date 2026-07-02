@@ -1,6 +1,8 @@
-# Sensitive data — never commit
-data/
+# Sensitive data — never commit (use data/* not data/ to allow exceptions below)
+data/*
 notes/
+# Safe to commit — placeholder values only
+!data/sample-config.json
 
 # Dependencies
 node_modules/

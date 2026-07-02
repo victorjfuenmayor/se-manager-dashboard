@@ -104,7 +104,7 @@
   },
 
   "slack": {
-    "_comment": "Channel names (without #) Claude Code searches for travel and event mentions when refreshing Events & Coverage.",
-    "channels": ["your-region-ses", "your-region-sales-team"]
+    "_comment": "Channel names (without #) Claude Code searches when refreshing. Include your Gong summaries channel for customer call context and deal updates.",
+    "channels": ["your-region-ses", "your-region-sales-team", "gong-summaries"]
   }
 }
