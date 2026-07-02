@@ -1,20 +1,26 @@
 {
-  "_comment": "Copy this file to config.json and fill in your team details. config.json is gitignored.",
+  "_comment": "Copy this file to config.json and fill in your values. config.json is gitignored — your data stays local.",
 
   "manager": {
     "name": "Your Name",
-    "email": "you@okta.com",
-    "region": "LATAM",
-    "quota": 8250000
+    "email": "you@company.com",
+    "region": "YOUR_REGION",
+    "quota": 8000000
+  },
+
+  "manager_above": {
+    "name": "Your Manager Name",
+    "role": "VP / Director"
   },
 
   "team": [
     {
       "id": "se1",
+      "_comment": "id must match the filename in data/notes/ (e.g. data/notes/se1.md for 1:1 notes)",
       "name": "First Last",
       "match": "First",
       "color": "#3B82F6",
-      "role": "Senior SE — Brazil",
+      "role": "Senior SE — Country",
       "location": "City, Country",
       "platform": "OWI",
       "individualTarget": 1000000
@@ -24,7 +30,7 @@
       "name": "First Last",
       "match": "First",
       "color": "#8B5CF6",
-      "role": "Senior SE — Mexico",
+      "role": "Senior SE — Country",
       "location": "City, Country",
       "platform": "Auth0",
       "individualTarget": 1650000
@@ -33,21 +39,72 @@
 
   "alignment": [
     {
-      "ae": "AE Last Name",
+      "_comment": "ae: substring of the AE's last name as it appears in Salesforce Opportunity Owner field",
+      "ae": "aelastname",
       "region": "North Region",
-      "okta_se": "SE First Name",
-      "auth0_se": "SE First Name"
+      "okta_se": "SE Full Name",
+      "auth0_se": "SE Full Name"
     },
     {
-      "ae": "Another AE",
+      "ae": "anotherlastname",
       "region": "South Region",
-      "okta_se": "SE First Name",
-      "auth0_se": "SE First Name"
+      "okta_se": "SE Full Name",
+      "auth0_se": "SE Full Name"
     }
   ],
 
-  "manager_above": {
-    "name": "Your Manager",
-    "role": "VP / Director"
+  "salesforce": {
+    "_comment": "domain: your company's Salesforce Lightning URL (e.g. mycompany.lightning.force.com). sales_area_filter: value of Account_Owner_Sales_Area__c used in the SOQL WHERE clause.",
+    "domain": "mycompany.lightning.force.com",
+    "sales_area_filter": "YOUR_REGION"
+  },
+
+  "fiscal_year": {
+    "_comment": "start_month: 1=Jan, 2=Feb, etc. current_quarter_end: last day of the current quarter (YYYY-MM-DD). Used for overdue deal highlighting.",
+    "start_month": 2,
+    "current_quarter_end": "2026-07-31"
+  },
+
+  "sheets": {
+    "pipeline": {
+      "_comment": "Your SFDC/Clari Google Sheet that syncs pipeline data. Used to build deals.json. Find the ID in the URL: docs.google.com/spreadsheets/d/SHEET_ID/edit",
+      "id": "YOUR_PIPELINE_SHEET_ID",
+      "tab": "YOUR_PIPELINE_TAB_NAME"
+    },
+    "vf_context_notes": {
+      "_comment": "Tab in the same pipeline sheet where you write back manager notes. Created automatically if it doesn't exist.",
+      "id": "YOUR_PIPELINE_SHEET_ID",
+      "tab": "Manager Context Notes"
+    },
+    "partners": {
+      "_comment": "Google Sheet with your partner account list from Salesforce. Refresh monthly.",
+      "id": "YOUR_PARTNERS_SHEET_ID",
+      "tab": "YOUR_PARTNERS_TAB_NAME"
+    },
+    "events_calendar": {
+      "_comment": "Google Sheet maintained by your regional marketing manager with the FY events calendar.",
+      "id": "YOUR_EVENTS_SHEET_ID",
+      "tab": "Agenda"
+    }
+  },
+
+  "docs": {
+    "team_weekly_notes": {
+      "_comment": "Google Doc where your team's weekly meeting notes are kept. Used to pull travel/activity info for Events & Coverage tab.",
+      "id": "YOUR_TEAM_WEEKLY_NOTES_DOC_ID"
+    },
+    "presales_handbook": "YOUR_PRESALES_HANDBOOK_DOC_ID",
+    "cotm_value_sheet": "YOUR_COTM_VALUE_SHEET_DOC_ID"
+  },
+
+  "goals_docs": {
+    "_comment": "Google Drive doc IDs for each SE's individual goals document. Key format: firstname.lastname (lowercase). Used to populate the People tab goals section.",
+    "first.last": "YOUR_SE1_GOALS_DOC_ID",
+    "first.last2": "YOUR_SE2_GOALS_DOC_ID"
+  },
+
+  "slack": {
+    "_comment": "Channel names (without #) Claude Code searches for travel and event mentions when refreshing Events & Coverage.",
+    "channels": ["your-region-ses", "your-region-sales-team"]
   }
 }

@@ -157,7 +157,8 @@ function dashboard(){
     sfdcUrl(id, type){
       if(!id) return '';
       const obj = type==='account' ? 'Account' : 'Opportunity';
-      return 'https://okta.lightning.force.com/lightning/r/'+obj+'/'+id+'/view';
+      const domain = this.config?.salesforce?.domain || 'lightning.force.com';
+      return 'https://'+domain+'/lightning/r/'+obj+'/'+id+'/view';
     },
     dealColSortKey(id){return{name:'name',amount:'amount',closeDate:'closeDate',techWinDate:'techWinDate'}[id]||null;},
     colDragStart(id){this.draggingCol=id;},
@@ -320,7 +321,7 @@ function dashboard(){
     },
     fmt(n){return n?'$'+Math.round(n).toLocaleString('en-US'):'$0';},
     fmtDate(d){if(!d)return '—';return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'});},
-    isOverdue(d){if(!d)return false;return new Date(d+'T23:59:59')<new Date('2026-07-01');},
+    isOverdue(d){if(!d)return false;const qEnd=this.config?.fiscal_year?.current_quarter_end||'2099-01-01';return new Date(d+'T23:59:59')<new Date(qEnd);},
     openModal(deal){this.modalDeal=deal;this.currentUpdate='';document.body.style.overflow='hidden';},
     closeModal(){this.modalDeal=null;document.body.style.overflow='';},
     getSavedUpdate(name){if(!name)return '';return localStorage.getItem('upd_'+name)||'';},
@@ -329,9 +330,11 @@ function dashboard(){
     hasPendingUpdate(name){return !!(name&&localStorage.getItem('upd_'+name));},
     pendingUpdatesCount(){return this.deals.filter(d=>this.hasPendingUpdate(d.name)).length;},
     exportUpdates(){
-      const inst='Instructions: For each opportunity find the matching row in the VF Context Notes tab '+
-        '(Sheet ID: 1gyJteTxJ-Kv2rOsnszpSbnJVarOFhI0JbAUNDspY7oA) and append the update to '+
-        'column B (VF Additional Context / Notes). Update column C to today date. Do NOT modify CSM_Notes__c.';
+      const sheetId=this.config?.sheets?.vf_context_notes?.id||this.config?.sheets?.pipeline?.id||'YOUR_SHEET_ID';
+      const notesTab=this.config?.sheets?.vf_context_notes?.tab||'Manager Context Notes';
+      const inst='Instructions: For each opportunity find the matching row in the '+notesTab+' tab '+
+        '(Sheet ID: '+sheetId+') and append the update to '+
+        'column B (Manager Additional Context / Notes). Update column C to today date. Do NOT modify CSM_Notes__c.';
       const lines=['UPDATES TO WRITE TO VF CONTEXT NOTES',
         'Source: SE Manager Dashboard - '+new Date().toLocaleDateString('en-US'),inst,''];
       let found=false;
