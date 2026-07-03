@@ -38,6 +38,19 @@ app.post('/api/notes/:id', (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// Parse PTO lines from a notes markdown file.
+// Any line matching "PTO: <text>" is extracted (case-insensitive).
+function parsePtoFromNotes(id) {
+  const file = path.join(NOTES_DIR, id + '.md');
+  if (!fs.existsSync(file)) return null;
+  const lines = fs.readFileSync(file, 'utf8').split('\n');
+  const pto = lines
+    .map(l => l.match(/^pto:\s*(.+)/i))
+    .filter(Boolean)
+    .map(m => m[1].trim());
+  return pto.length ? pto : null;
+}
+
 // Serve all data in one call
 app.get('/api/data', (req, res) => {
   try {
@@ -47,6 +60,13 @@ app.get('/api/data', (req, res) => {
     const partners = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'partners.json'), 'utf8'));
     const people   = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'people.json'),   'utf8'));
     const ytd      = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'ytd.json'),      'utf8'));
+
+    // Overlay PTO from notes files — notes take precedence over people.json
+    for (const person of people) {
+      const fromNotes = parsePtoFromNotes(person.id);
+      if (fromNotes) person.pto = fromNotes;
+    }
+
     res.json({ deals, events, projects, partners, people, ytd, updatedAt: fs.statSync(path.join(DATA_DIR, 'deals.json')).mtime });
   } catch (err) {
     res.status(500).json({ error: err.message });

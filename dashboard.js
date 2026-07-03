@@ -12,7 +12,7 @@ function dashboard(){
     },
     loading:true, loadError:false, updatedAt:'', darkMode:false,
     projects:[], filterProjectStatus:'', activeProject:null,
-    people:[], expandedPerson:{}, peopleNotes:{}, peopleNoteTimers:{},
+    people:[], expandedPerson:{}, peopleNotes:{}, peopleNoteTimers:{}, peopleSearch:'',
     ytd:null, ytdCharts:{},
     ytdFilterTypes:[], ytdFilterSEs:[], ytdFilterPlatforms:[], ytdFilterQs:[], ytdSortCol:'date', ytdSortAsc:true,
     ytdToggle(arr, val){ const i=arr.indexOf(val); i===-1?arr.push(val):arr.splice(i,1); },
@@ -251,6 +251,20 @@ function dashboard(){
       return m[t]||'background:#f3f4f6;color:#374155';
     },
     fmt$(n){ return n ? '$'+Math.round(n).toLocaleString('en-US') : '—'; },
+    filteredPeople(){
+      if(!this.peopleSearch.trim()) return this.people;
+      const q = this.peopleSearch.toLowerCase();
+      return this.people.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        (p.role||'').toLowerCase().includes(q) ||
+        (p.location||'').toLowerCase().includes(q) ||
+        (p.topOfMind||[]).some(t => t.toLowerCase().includes(q)) ||
+        (p.goals||[]).some(g => g.title.toLowerCase().includes(q) || (g.description||'').toLowerCase().includes(q) || (g.tracking?.note||'').toLowerCase().includes(q)) ||
+        (p.pto||[]).some(t => t.toLowerCase().includes(q)) ||
+        (p.upcomingTravel||[]).some(t => t.toLowerCase().includes(q)) ||
+        (p.concerns||[]).some(t => t.toLowerCase().includes(q))
+      );
+    },
     filteredProjects(){
       if(!this.filterProjectStatus) return this.projects;
       return this.projects.filter(p=>p.status===this.filterProjectStatus);

@@ -176,6 +176,18 @@ Write all updated files. Report a summary: how many deals, events, Gong calls pr
 ### "run SE manager notes" or "generate weekly notes"
 Generate structured SE Manager Notes for all open deals >$100K. Read the pipeline sheet fresh, apply the SE Manager Notes template (from memory), output a table with opportunity + notes. Also generate an inspection list flagging misaligned stages, missing champions, blank fields.
 
+### PTO convention in notes files
+
+Notes files (`data/notes/<id>.md`) support a `PTO:` line that is automatically parsed by the server and displayed in the People tab PTO section — **no manual `people.json` edit needed**.
+
+**Format:** One entry per line, anywhere in the file:
+```
+PTO: Nov 30 – Dec 5, 2026 — Thanksgiving week
+PTO: Dec 24-26, 2026 — Christmas
+```
+
+The server reads every `PTO: <text>` line (case-insensitive) on each page load and injects them live into the People tab. When updating an SE's notes, always write PTO entries using this format. Notes-based PTO takes precedence over anything in `people.json`.
+
 ### "update [SE name]'s goals"
 Read `config.goals_docs.[first.last]` from Google Drive, read `data/notes/<id>.md` for recent 1:1 context, update the goals tracking in `data/people.json`.
 
